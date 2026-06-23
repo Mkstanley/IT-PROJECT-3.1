@@ -9,7 +9,7 @@
     .crumb { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); padding: 20px 0 14px; }
     .crumb a:hover { color: var(--green-dark); }
     .gallery { display:grid; grid-template-columns: 2fr 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 10px; height: 420px; border-radius: var(--r-lg); overflow:hidden; }
-    .gallery .ph { border-radius: 0; }
+    .gallery .g-item { border-radius: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
     .gallery .g-main { grid-row: 1 / span 2; }
     .prop-grid { display:grid; grid-template-columns: 1fr 360px; gap: 36px; align-items: start; padding: 28px 0 64px; }
     .prop-title { font-size: 30px; letter-spacing:-.03em; }
@@ -83,16 +83,17 @@
       const n = KH.NEIGHBORHOODS.find(x => x.name === l.hood) || {x:50,y:50};
       const bedTxt = l.bedrooms === 0 ? 'Self-contained' : l.bedrooms + ' bedroom';
       const fav = KH.isFav(l.id);
+      const gallery = KejaUI.listingImages(l, 5);
 
       page.innerHTML = `
         <div class="crumb"><a href="index.html">Home</a> / <a href="listings.html">Rentals</a> / <a href="listings.html?hood=${encodeURIComponent(l.hood)}">${l.hood}</a> / <span style="color:var(--ink)">${l.title}</span></div>
 
         <div class="gallery">
-          <div class="ph g-main"><span class="ph-label">photo · living area</span></div>
-          <div class="ph g-2"><span class="ph-label">bedroom</span></div>
-          <div class="ph g-3"><span class="ph-label">kitchen</span></div>
-          <div class="ph g-4"><span class="ph-label">bathroom</span></div>
-          <div class="ph g-5"><span class="ph-label">exterior</span></div>
+          <img class="g-item g-main" src="${gallery[0]}" alt="${l.title} main photo">
+          <img class="g-item g-2" src="${gallery[1]}" alt="${l.title} bedroom photo">
+          <img class="g-item g-3" src="${gallery[2]}" alt="${l.title} kitchen photo">
+          <img class="g-item g-4" src="${gallery[3]}" alt="${l.title} bathroom photo">
+          <img class="g-item g-5" src="${gallery[4]}" alt="${l.title} exterior photo">
         </div>
 
         <div class="prop-grid">

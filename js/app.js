@@ -80,6 +80,67 @@
     return 'KES ' + Number(n || 0).toLocaleString('en-KE');
   }
 
+  /* ---- photo helpers ----------------------------------------------------- */
+  const HOOD_IMAGE = {
+    'Westlands': 'IT-PROJECT%20IMAGES/WESTLANDS.jpg',
+    'Kileleshwa': 'IT-PROJECT%20IMAGES/KILELESHWA.jpg',
+    'Lavington': 'IT-PROJECT%20IMAGES/LAVINGTON.jpg',
+    'Parklands': 'IT-PROJECT%20IMAGES/PARKLANDS.jpg',
+    'South B': 'IT-PROJECT%20IMAGES/SOUTH%20B.jpg',
+    'South C': 'IT-PROJECT%20IMAGES/SOUTH%20C.jpg',
+  };
+  const TYPE_IMAGE = {
+    'Bedsitter': 'IT-PROJECT%20IMAGES/BEDSITTER.jpg',
+    'Studio': 'IT-PROJECT%20IMAGES/BEDSITTER12.jpg',
+    '1 Bedroom': 'IT-PROJECT%20IMAGES/1BEDROOM.jpg',
+    '2 Bedroom': 'IT-PROJECT%20IMAGES/2BEDROOM.jpg',
+    '3 Bedroom': 'IT-PROJECT%20IMAGES/2B.jpg',
+    'Maisonette': 'IT-PROJECT%20IMAGES/2BED.jpg',
+  };
+  const GALLERY_POOL = [
+    'IT-PROJECT%20IMAGES/1BED.jpg',
+    'IT-PROJECT%20IMAGES/1BEDROOM.jpg',
+    'IT-PROJECT%20IMAGES/2B.jpg',
+    'IT-PROJECT%20IMAGES/2BED.jpg',
+    'IT-PROJECT%20IMAGES/2BEDROOM.jpg',
+    'IT-PROJECT%20IMAGES/BEDSITTER.jpg',
+    'IT-PROJECT%20IMAGES/BEDSITTER12.jpg',
+    'IT-PROJECT%20IMAGES/KILELESHWA.jpg',
+    'IT-PROJECT%20IMAGES/LAVINGTON.jpg',
+    'IT-PROJECT%20IMAGES/PARKLANDS.jpg',
+    'IT-PROJECT%20IMAGES/SOUTH%20B.jpg',
+    'IT-PROJECT%20IMAGES/SOUTH%20C.jpg',
+    'IT-PROJECT%20IMAGES/WESTLANDS.jpg',
+  ];
+
+  function listingImages(l, count) {
+    const out = [];
+    const seen = {};
+    const push = (src) => {
+      if (!src || seen[src]) return;
+      seen[src] = true;
+      out.push(src);
+    };
+    push(HOOD_IMAGE[l.hood]);
+    push(TYPE_IMAGE[l.type]);
+
+    const idx = parseInt(String(l.id || '').replace(/\D/g, ''), 10) || 0;
+    for (let i = 0; i < GALLERY_POOL.length; i++) {
+      push(GALLERY_POOL[(idx + i) % GALLERY_POOL.length]);
+      if (count && out.length >= count) break;
+    }
+    if (!out.length) out.push('assets/thumbnail.webp');
+    return count ? out.slice(0, count) : out;
+  }
+
+  function listingImage(l) {
+    return listingImages(l, 1)[0];
+  }
+
+  function neighborhoodImage(name) {
+    return HOOD_IMAGE[name] || 'assets/thumbnail.webp';
+  }
+
   /* ---- badges ------------------------------------------------------------ */
   function statusBadge(status) {
     if (status === 'verified') return `<span class="badge badge-verified">${ICN.shield} Verified</span>`;
@@ -95,8 +156,8 @@
     const beds = l.bedrooms === 0 ? 'Studio' : l.bedrooms + ' bd';
     const card = el(`
       <article class="listing-card" data-id="${l.id}">
-        <div class="lc-media ph">
-          <span class="ph-label">photo · ${l.hood.toLowerCase()}</span>
+        <div class="lc-media">
+          <img class="media-img" src="${listingImage(l)}" alt="${l.title}">
           <button class="lc-fav ${fav ? 'on' : ''}" type="button" aria-label="Save home">${ICN.heart}</button>
           ${l.status === 'verified' ? `<span class="lc-verified">${ICN.shield} Verified</span>` : ''}
           <span class="lc-type">${l.type}</span>
@@ -249,6 +310,7 @@
   window.ICN = ICN;
   window.KejaUI = {
     el, qs, initials, fmtKES, statusBadge, amenityIcon, listingCard,
+    listingImage, listingImages, neighborhoodImage,
     toast, modal, closeModal, mountNav, mountFooter,
   };
 })();

@@ -129,7 +129,7 @@
       if (!pending.length) qp.innerHTML = `<div class="empty" style="padding:30px"><p>Queue is clear — nothing awaiting review. 🎉</p></div>`;
       pending.slice(0,3).forEach(l => {
         qp.appendChild(KejaUI.el(`<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line-2)">
-          <div class="t-thumb ph"></div>
+          <img class="t-thumb media-img" src="${KejaUI.listingImage(l)}" alt="${l.title}">
           <div style="flex:1"><div style="font-weight:700;font-size:14px">${l.title}</div><div class="muted" style="font-size:12.5px">${l.hood} · ${KejaUI.fmtKES(l.rent)}/mo</div></div>
           <span class="badge badge-pending">Pending</span></div>`));
       });
@@ -148,7 +148,7 @@
       pending.forEach(l => {
         const ll = KH.user(l.landlordId);
         const card = KejaUI.el(`<div class="verify-card">
-          <div class="vc-img ph"><span class="ph-label">photo</span></div>
+          <img class="vc-img media-img" src="${KejaUI.listingImage(l)}" alt="${l.title}">
           <div>
             <h3>${l.title}</h3>
             <div class="vc-meta">
@@ -193,7 +193,7 @@
         arr.forEach(l => {
           const ll = KH.user(l.landlordId);
           const tr = KejaUI.el(`<tr>
-            <td><div class="t-cell"><div class="t-thumb ph"></div><div><div style="font-weight:700">${l.title.slice(0,30)}</div><div class="muted" style="font-size:12px">${l.createdAt}</div></div></div></td>
+            <td><div class="t-cell"><img class="t-thumb media-img" src="${KejaUI.listingImage(l)}" alt="${l.title}"><div><div style="font-weight:700">${l.title.slice(0,30)}</div><div class="muted" style="font-size:12px">${l.createdAt}</div></div></div></td>
             <td>${l.hood}</td><td>${l.type}</td><td style="font-weight:700">${KejaUI.fmtKES(l.rent)}</td>
             <td>${ll.name}</td><td>${KejaUI.statusBadge(l.status)}</td>
             <td><div style="display:flex;gap:6px;justify-content:flex-end">
