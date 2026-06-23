@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Browse rentals — KejaHunt</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .browse { display: grid; grid-template-columns: 272px 1fr; gap: 28px; align-items: start; padding: 28px 0 64px; }
+    .filters { position: sticky; top: calc(var(--nav-h) + 20px); background:#fff; border:1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--sh-2); padding: 20px; }
+    .filters h3 { font-size: 15px; display:flex; align-items:center; gap:8px; margin-bottom: 4px; }
+    .filters h3 svg { width:18px; height:18px; color: var(--green); }
+    .f-group { padding: 16px 0; border-bottom: 1px solid var(--line-2); }
+    .f-group:last-of-type { border-bottom: none; }
+    .f-group > label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); display:block; margin-bottom: 10px; }
+    .range-vals { display:flex; justify-content: space-between; font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+    .range-vals .mono { color: var(--green-dark); }
+    input[type=range] { width: 100%; accent-color: var(--green); }
+    .amen-list { display:flex; flex-direction: column; gap: 2px; max-height: 190px; overflow-y: auto; }
+    .results-head { display:flex; justify-content: space-between; align-items:center; margin-bottom: 18px; flex-wrap: wrap; gap: 12px; }
+    .results-head h1 { font-size: 24px; }
+    .results-head .sub { color: var(--muted); font-size: 14px; }
+    .view-toggle { display:flex; gap: 10px; align-items:center; }
+
+    /* mock map */
+    .map { position: relative; height: 420px; border-radius: var(--r-lg); overflow: hidden; border:1px solid var(--line); box-shadow: var(--sh-2); margin-bottom: 24px;
+      background:
+        radial-gradient(circle at 30% 30%, #e9efe9, #dfe7df),
+        var(--bg-2); }
+    .map-grid { position:absolute; inset:0; background-image:
+      linear-gradient(rgba(14,124,102,.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(14,124,102,.06) 1px, transparent 1px);
+      background-size: 44px 44px; }
+    .map-road { position:absolute; background: #fff; opacity:.85; }
+    .map-water { position:absolute; background: linear-gradient(135deg,#cfe3ea,#bcd8e1); border-radius: 40%; opacity:.7; }
+    .pin {
+      position: absolute; transform: translate(-50%,-100%); cursor: pointer; z-index: 2;
+      display:flex; flex-direction: column; align-items: center;
+    }
+    .pin .bub {
+      background: var(--white); border: 1.5px solid var(--green); color: var(--green-dark);
+      font-weight: 800; font-size: 12px; padding: 4px 9px; border-radius: var(--pill); box-shadow: var(--sh-2);
+      white-space: nowrap; transition: .12s;
+    }
+    .pin:hover .bub, .pin.active .bub { background: var(--green); color:#fff; transform: scale(1.08); }
+    .pin .stem { width: 2px; height: 7px; background: var(--green); }
+    .pin .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--green); border: 2px solid #fff; box-shadow: var(--sh-1); }
+    .map-legend { position:absolute; left:14px; bottom:14px; background:#fff; border:1px solid var(--line); border-radius: var(--r); padding: 8px 12px; font-size: 12px; font-weight:600; box-shadow: var(--sh-2); display:flex; align-items:center; gap:8px; }
+    .map-legend .mono { color: var(--muted); }
+    .map-note { position:absolute; right:14px; top:14px; background: rgba(255,255,255,.92); border:1px solid var(--line); border-radius: var(--pill); padding: 6px 12px; font-size: 11.5px; font-family:'Space Mono',monospace; color: var(--muted); }
+
+    .active-filters { display:flex; gap:8px; flex-wrap: wrap; margin-bottom: 16px; }
+    .af { display:inline-flex; align-items:center; gap:6px; background: var(--green-tint); color: var(--green-dark); border-radius: var(--pill); padding: 5px 8px 5px 12px; font-size: 13px; font-weight: 700; }
+    .af button { color: var(--green-dark); display:grid; place-items:center; width:18px; height:18px; border-radius:50%; }
+    .af button:hover { background: var(--green-tint-2); }
+    .af button svg { width: 12px; height: 12px; }
+
+    .mobile-filter-btn { display:none; }
+    @media (max-width: 900px) {
+      .browse { grid-template-columns: 1fr; }
+      .filters { position: fixed; inset: 0; z-index: 120; border-radius: 0; overflow-y: auto; display: none; }
+      .filters.open { display: block; }
+      .mobile-filter-btn { display: inline-flex; }
+    }
+  </style>
+</head>
+<body>
+  <div id="nav"></div>
+
+  <div class="wrap browse">
+    <!-- FILTERS -->
+    <aside class="filters" id="filters">
+      <h3 id="fTitle"></h3>
+      <p class="muted" style="font-size:12.5px;margin-bottom:6px">Only verified listings are shown.</p>
+
+      <div class="f-group">
+        <label>Neighborhood</label>
+        <select class="select" id="fHood"><option value="">All Nairobi</option></select>
+      </div>
+
+      <div class="f-group">
+        <label>Property type</label>
+        <select class="select" id="fType"><option value="">Any type</option></select>
+      </div>
+
+      <div class="f-group">
+        <label>Max monthly rent</label>
+        <div class="range-vals"><span>KES 0</span><span class="mono" id="fMaxLabel">100,000</span></div>
+        <input type="range" id="fMax" min="3000" max="100000" step="500" value="100000">
+      </div>
+
+      <div class="f-group">
+        <label>Bedrooms</label>
+        <div class="seg" id="fBeds" style="display:flex;width:100%">
+          <button data-b="" class="on">Any</button>
+          <button data-b="0">Studio</button>
+          <button data-b="1">1</button>
+          <button data-b="2">2</button>
+          <button data-b="3">3+</button>
+        </div>
+      </div>
+
+      <div class="f-group">
+        <label>Amenities</label>
+        <div class="amen-list" id="fAmen"></div>
+      </div>
+
+      <button class="btn btn-soft btn-block btn-sm" id="fClear">Clear all filters</button>
+    </aside>
+
+    <!-- RESULTS -->
+    <main>
+      <div class="results-head">
+        <div>
+          <h1 id="rCount">Rentals in Nairobi</h1>
+          <div class="sub" id="rSub">verified homes available now</div>
+        </div>
+        <div class="view-toggle">
+          <button class="btn btn-ghost btn-sm mobile-filter-btn" id="openFilters">Filters</button>
+          <select class="select" id="sort" style="width:auto;box-shadow:var(--sh-1)">
+            <option value="new">Newest first</option>
+            <option value="low">Price: low to high</option>
+            <option value="high">Price: high to low</option>
+            <option value="rating">Top rated</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="active-filters" id="activeFilters"></div>
+
+      <!-- MAP -->
+      <div class="map" id="map">
+        <div class="map-grid"></div>
+        <div class="map-water" style="left:62%;top:8%;width:140px;height:90px"></div>
+        <div class="map-road" style="left:0;top:50%;width:100%;height:8px"></div>
+        <div class="map-road" style="left:48%;top:0;width:7px;height:100%"></div>
+        <div class="map-road" style="left:0;top:24%;width:100%;height:4px;opacity:.5"></div>
+        <div class="map-road" style="left:74%;top:0;width:4px;height:100%;opacity:.5"></div>
+        <div class="map-note">mock map · pins show verified listings</div>
+        <div class="map-legend" id="mapLegend"></div>
+      </div>
+
+      <div class="listing-grid" id="results"></div>
+      <div id="empty"></div>
+    </main>
+  </div>
+
+  <div id="footer"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    KejaUI.mountNav('listings');
+    KejaUI.mountFooter();
+    document.getElementById('fTitle').innerHTML = ICN.sliders + ' Filters';
+    document.getElementById('mapLegend').innerHTML = ICN.pin + ' <span class="mono">tap a pin to view</span>';
+
+    // state from URL
+    const state = {
+      hood: KejaUI.qs('hood') || '',
+      type: KejaUI.qs('type') || '',
+      max: +KejaUI.qs('max') || 100000,
+      beds: '',
+      amenities: [],
+      sort: 'new',
+      tier: KejaUI.qs('tier') || '',
+    };
+
+    // populate selects
+    const fHood = document.getElementById('fHood');
+    KH.NEIGHBORHOODS.forEach(n => fHood.append(new Option(n.name, n.name)));
+    const fType = document.getElementById('fType');
+    KH.TYPES.forEach(t => fType.append(new Option(t, t)));
+    fHood.value = state.hood; fType.value = state.type;
+    document.getElementById('fMax').value = state.max;
+    document.getElementById('fMaxLabel').textContent = Number(state.max).toLocaleString();
+
+    // amenities checkboxes
+    const fAmen = document.getElementById('fAmen');
+    KH.ALL_AMENITIES.forEach(a => {
+      const row = KejaUI.el(`<label class="checkrow"><input type="checkbox" value="${a}"><span>${a}</span></label>`);
+      row.querySelector('input').addEventListener('change', e => {
+        if (e.target.checked) state.amenities.push(a);
+        else state.amenities = state.amenities.filter(x => x !== a);
+        render();
+      });
+      fAmen.appendChild(row);
+    });
+
+    // bed segmented
+    document.querySelectorAll('#fBeds button').forEach(b => b.addEventListener('click', () => {
+      document.querySelectorAll('#fBeds button').forEach(x => x.classList.remove('on'));
+      b.classList.add('on'); state.beds = b.dataset.b; render();
+    }));
+
+    fHood.addEventListener('change', () => { state.hood = fHood.value; render(); });
+    fType.addEventListener('change', () => { state.type = fType.value; render(); });
+    document.getElementById('fMax').addEventListener('input', e => {
+      state.max = +e.target.value;
+      document.getElementById('fMaxLabel').textContent = state.max.toLocaleString();
+      render();
+    });
+    document.getElementById('sort').addEventListener('change', e => { state.sort = e.target.value; render(); });
+    document.getElementById('fClear').addEventListener('click', () => {
+      state.hood=''; state.type=''; state.max=100000; state.beds=''; state.amenities=[]; state.tier='';
+      fHood.value=''; fType.value=''; document.getElementById('fMax').value=100000;
+      document.getElementById('fMaxLabel').textContent='100,000';
+      document.querySelectorAll('#fAmen input').forEach(i=>i.checked=false);
+      document.querySelectorAll('#fBeds button').forEach((x,i)=>x.classList.toggle('on',i===0));
+      render();
+    });
+
+    // mobile
+    document.getElementById('openFilters').addEventListener('click', () => {
+      document.getElementById('filters').classList.toggle('open');
+    });
+
+    const tierMaxByName = {};
+    KH.NEIGHBORHOODS.forEach(n => tierMaxByName[n.name] = n.tier);
+
+    function filtered() {
+      let arr = KH.verifiedListings();
+      if (state.hood) arr = arr.filter(l => l.hood === state.hood);
+      if (state.type) arr = arr.filter(l => l.type === state.type);
+      if (state.tier) arr = arr.filter(l => tierMaxByName[l.hood] === state.tier);
+      arr = arr.filter(l => l.rent <= state.max);
+      if (state.beds !== '') {
+        const b = +state.beds;
+        arr = arr.filter(l => b === 3 ? l.bedrooms >= 3 : l.bedrooms === b);
+      }
+      if (state.amenities.length)
+        arr = arr.filter(l => state.amenities.every(a => l.amenities.includes(a)));
+      // sort
+      if (state.sort === 'low') arr.sort((a,b)=>a.rent-b.rent);
+      else if (state.sort === 'high') arr.sort((a,b)=>b.rent-a.rent);
+      else if (state.sort === 'rating') arr.sort((a,b)=>b.rating-a.rating);
+      else arr.sort((a,b)=> (a.createdAt<b.createdAt?1:-1));
+      return arr;
+    }
+
+    function renderChips() {
+      const wrap = document.getElementById('activeFilters');
+      wrap.innerHTML = '';
+      const chips = [];
+      if (state.hood) chips.push(['hood', state.hood]);
+      if (state.type) chips.push(['type', state.type]);
+      if (state.tier) chips.push(['tier', state.tier+'-cost areas']);
+      if (state.beds!=='') chips.push(['beds', (state.beds==='0'?'Studio':state.beds==='3'?'3+ bed':state.beds+' bed')]);
+      if (state.max < 100000) chips.push(['max', 'Under '+KejaUI.fmtKES(state.max)]);
+      state.amenities.forEach(a => chips.push(['amen:'+a, a]));
+      chips.forEach(([k,label]) => {
+        const c = KejaUI.el(`<span class="af">${label}<button>${ICN.x}</button></span>`);
+        c.querySelector('button').addEventListener('click', () => {
+          if (k==='hood'){state.hood='';fHood.value='';}
+          else if (k==='type'){state.type='';fType.value='';}
+          else if (k==='tier'){state.tier='';}
+          else if (k==='beds'){state.beds='';document.querySelectorAll('#fBeds button').forEach((x,i)=>x.classList.toggle('on',i===0));}
+          else if (k==='max'){state.max=100000;document.getElementById('fMax').value=100000;document.getElementById('fMaxLabel').textContent='100,000';}
+          else if (k.startsWith('amen:')){const a=k.slice(5);state.amenities=state.amenities.filter(x=>x!==a);document.querySelectorAll('#fAmen input').forEach(i=>{if(i.value===a)i.checked=false;});}
+          render();
+        });
+        wrap.appendChild(c);
+      });
+    }
+
+    function renderMap(arr) {
+      const map = document.getElementById('map');
+      map.querySelectorAll('.pin').forEach(p => p.remove());
+      arr.forEach(l => {
+        const n = KH.NEIGHBORHOODS.find(x => x.name === l.hood);
+        if (!n) return;
+        // jitter so multiple in same hood don't overlap
+        const jx = (parseInt(l.id.replace(/\D/g,'')||'0',10)%7 - 3) * 1.4;
+        const jy = (parseInt(l.id.replace(/\D/g,'')||'0',10)%5 - 2) * 1.6;
+        const pin = KejaUI.el(`<div class="pin" style="left:${n.x+jx}%;top:${n.y+jy}%" data-id="${l.id}">
+          <div class="bub">${(l.rent/1000)}k</div><div class="stem"></div><div class="dot"></div></div>`);
+        pin.addEventListener('mouseenter', () => {
+          const card = document.querySelector(`.listing-card[data-id="${l.id}"]`);
+          if (card) card.style.outline = '2px solid var(--green)';
+        });
+        pin.addEventListener('mouseleave', () => {
+          const card = document.querySelector(`.listing-card[data-id="${l.id}"]`);
+          if (card) card.style.outline = '';
+        });
+        pin.addEventListener('click', () => location.href = 'property.html?id=' + l.id);
+        map.appendChild(pin);
+      });
+    }
+
+    function render() {
+      const arr = filtered();
+      const results = document.getElementById('results');
+      results.innerHTML = '';
+      document.getElementById('rCount').textContent =
+        arr.length + ' ' + (arr.length===1?'rental':'rentals') + (state.hood?(' in '+state.hood):' in Nairobi');
+      document.getElementById('rSub').textContent =
+        arr.length ? 'verified homes — every listing ownership-checked' : '';
+      document.getElementById('empty').innerHTML = '';
+      if (!arr.length) {
+        document.getElementById('empty').innerHTML =
+          `<div class="empty"><div class="e-ic">${ICN.search}</div><h3 style="color:var(--ink)">No homes match those filters</h3><p>Try widening your budget or removing an amenity.</p></div>`;
+      }
+      arr.forEach(l => results.appendChild(KejaUI.listingCard(l)));
+      renderMap(arr);
+      renderChips();
+    }
+    render();
+  </script>
+</body>
+</html>

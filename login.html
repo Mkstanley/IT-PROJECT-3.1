@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Log in — KejaHunt</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .auth { display:grid; grid-template-columns: 1fr 1fr; min-height: calc(100vh - var(--nav-h)); }
+    .auth-aside { background: var(--green-deep); color:#fff; padding: 56px; display:flex; flex-direction:column; justify-content:space-between; position:relative; overflow:hidden; }
+    .auth-aside .a-mark { position:absolute; right:-60px; top:-60px; width:260px; height:260px; border-radius:50%; background: rgba(255,255,255,.05); }
+    .auth-aside h2 { font-size:34px; letter-spacing:-.03em; max-width:380px; line-height:1.12; }
+    .auth-aside .a-list { margin-top:28px; display:flex; flex-direction:column; gap:16px; }
+    .auth-aside .a-list div { display:flex; gap:12px; align-items:flex-start; font-size:15px; color:#cfe2db; }
+    .auth-aside .a-list svg { width:20px; height:20px; color:#7fe3c4; flex:none; margin-top:2px; }
+    .auth-form { padding: 56px; display:flex; align-items:center; justify-content:center; }
+    .auth-form .inner { width:100%; max-width: 400px; }
+    .auth-form h1 { font-size:28px; letter-spacing:-.02em; }
+    .demo-box { background:var(--bg); border:1px solid var(--line); border-radius:var(--r); padding:14px; margin-top:20px; }
+    .demo-box .dl { font-size:11.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-weight:700; margin-bottom:10px; font-family:'Space Mono',monospace; }
+    .demo-row { display:flex; gap:8px; }
+    .demo-row button { flex:1; padding:10px; border-radius:var(--r-sm); border:1px solid var(--line); background:#fff; font-weight:700; font-size:13px; color:var(--ink-2); }
+    .demo-row button:hover { border-color:var(--green); color:var(--green-dark); background:var(--green-tint); }
+    .auth-foot { text-align:center; margin-top:22px; font-size:14px; color:var(--muted); }
+    .auth-foot a { color:var(--green-dark); font-weight:700; }
+    .brand-line { display:flex; align-items:center; gap:10px; font-weight:800; font-size:22px; }
+    .brand-line .mark { width:32px;height:32px;border-radius:9px;background:var(--green); }
+    @media (max-width: 800px) { .auth { grid-template-columns: 1fr; } .auth-aside { display:none; } .auth-form { padding: 36px 24px; } }
+  </style>
+</head>
+<body>
+  <div id="nav"></div>
+  <div class="auth">
+    <aside class="auth-aside">
+      <div class="a-mark"></div>
+      <a href="index.html" class="brand-line" style="color:#fff;position:relative"><span class="mark"></span>KejaHunt</a>
+      <div style="position:relative">
+        <h2>Welcome back to honest house-hunting.</h2>
+        <div class="a-list" id="aList"></div>
+      </div>
+      <div class="mono" style="font-size:12px;color:#9fbcb2;position:relative">Strathmore University · BBIT Project · 2026</div>
+    </aside>
+
+    <main class="auth-form">
+      <div class="inner">
+        <h1>Log in</h1>
+        <p class="muted" style="margin:8px 0 24px">Welcome back. Enter your details to continue.</p>
+
+        <form id="loginForm">
+          <div class="field">
+            <label>Email address</label>
+            <div class="input-group"><span class="ig-icon" id="mailIc"></span><input class="input" type="email" name="email" placeholder="you@example.com" value="aisha@example.com" required></div>
+          </div>
+          <div class="field">
+            <label>Password</label>
+            <div class="input-group"><span class="ig-icon" id="lockIc"></span><input class="input" type="password" name="password" placeholder="••••••••" value="demo1234"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+            <label class="checkrow"><input type="checkbox" checked> Remember me</label>
+            <a href="#" style="font-size:13px;color:var(--green-dark);font-weight:700">Forgot password?</a>
+          </div>
+          <button class="btn btn-primary btn-lg btn-block" type="submit">Log in</button>
+        </form>
+
+        <div class="demo-box">
+          <div class="dl">Quick demo login — try each role</div>
+          <div class="demo-row">
+            <button data-id="u_t1">Tenant</button>
+            <button data-id="u_l1">Landlord</button>
+            <button data-id="u_admin">Admin</button>
+          </div>
+        </div>
+
+        <div class="auth-foot">New to KejaHunt? <a href="register.html">Create an account</a></div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    KejaUI.mountNav('');
+    document.getElementById('mailIc').innerHTML = ICN.mail;
+    document.getElementById('lockIc').innerHTML = ICN.shield;
+    document.getElementById('aList').innerHTML = [
+      'Browse only verified, ownership-checked listings',
+      'Message landlords safely without sharing your number',
+      'Save your favorite homes and track viewings',
+    ].map(t => `<div>${ICN.check}<span>${t}</span></div>`).join('');
+
+    const next = KejaUI.qs('next');
+    function go(){ location.href = next || 'account.html'; }
+
+    document.getElementById('loginForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const email = new FormData(e.target).get('email');
+      const u = KH.login(email);
+      if (u) { KejaUI.toast('Welcome back, ' + u.name.split(' ')[0]); setTimeout(go, 600); }
+      else { KejaUI.toast('No account found — try a demo login below', ICN.x); }
+    });
+
+    document.querySelectorAll('.demo-row button').forEach(b => b.addEventListener('click', () => {
+      const u = KH.loginAs(b.dataset.id);
+      KejaUI.toast('Logged in as ' + u.name);
+      const dest = u.role === 'admin' ? 'admin.html' : u.role === 'tenant' ? 'account.html' : 'landlord.html';
+      setTimeout(() => location.href = next || dest, 600);
+    }));
+  </script>
+</body>
+</html>

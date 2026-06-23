@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KejaHunt — Verified rentals for urban Kenya</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    /* ---- landing-only styles ---- */
+    .hero { position: relative; overflow: hidden; background: linear-gradient(180deg, #fff 0%, var(--bg) 100%); }
+    .hero-inner { display: grid; grid-template-columns: 1.05fr .95fr; gap: 48px; align-items: center; padding: 64px 0 76px; }
+    .hero h1 { font-size: 54px; line-height: 1.04; letter-spacing: -.035em; }
+    .hero h1 .hl { color: var(--green); }
+    .hero .lead { font-size: 18px; color: var(--muted); margin-top: 20px; max-width: 480px; }
+    .hero-search { margin-top: 28px; background: var(--white); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--sh-3); padding: 10px; display: flex; gap: 8px; }
+    .hero-search .hs-field { flex: 1; display: flex; align-items: center; gap: 9px; padding: 8px 12px; border-radius: var(--r); }
+    .hero-search .hs-field:hover { background: var(--bg); }
+    .hero-search select, .hero-search input { border: none; background: none; font-weight: 600; color: var(--ink); width: 100%; outline: none; cursor: pointer; }
+    .hero-search .hs-div { width: 1px; background: var(--line); margin: 6px 0; }
+    .hero-trust { display: flex; gap: 22px; margin-top: 24px; flex-wrap: wrap; }
+    .hero-trust div { display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 600; color: var(--ink-2); }
+    .hero-trust svg { width: 17px; height: 17px; color: var(--green); }
+    .hero-visual { position: relative; height: 460px; }
+    .hv-card { position: absolute; background: #fff; border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--sh-3); overflow: hidden; }
+    .hv-main { inset: 0 40px 60px 0; }
+    .hv-main .ph { height: 260px; }
+    .hv-float { width: 220px; bottom: 0; right: 0; padding: 14px; }
+    .hv-badge { position: absolute; top: 20px; right: 8px; background: #fff; border:1px solid var(--line); box-shadow: var(--sh-2); border-radius: var(--pill); padding: 8px 14px; font-weight: 700; font-size: 13px; display: flex; align-items: center; gap: 7px; }
+    .hv-badge svg { width: 16px; height: 16px; color: var(--green); }
+
+    .marquee { background: var(--green-deep); color: #cfe2db; padding: 14px 0; overflow: hidden; }
+    .marquee .row { display: flex; gap: 48px; white-space: nowrap; font-family: 'Space Mono', monospace; font-size: 13px; letter-spacing: .04em; animation: scroll 30s linear infinite; }
+    .marquee .row span { display: flex; align-items: center; gap: 10px; }
+    @keyframes scroll { to { transform: translateX(-50%); } }
+
+    .val-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 22px; margin-top: 40px; }
+    .val { background: #fff; border: 1px solid var(--line); border-radius: var(--r-lg); padding: 26px; box-shadow: var(--sh-2); }
+    .val .v-ic { width: 48px; height: 48px; border-radius: 13px; background: var(--green-tint); color: var(--green-dark); display: grid; place-items: center; margin-bottom: 16px; }
+    .val .v-ic svg { width: 24px; height: 24px; }
+    .val h3 { font-size: 18px; margin-bottom: 8px; }
+    .val p { font-size: 14.5px; color: var(--muted); }
+
+    .how { display: grid; grid-template-columns: repeat(4,1fr); gap: 20px; margin-top: 44px; counter-reset: step; }
+    .step { position: relative; padding-top: 14px; }
+    .step .n { font-family: 'Space Mono', monospace; font-weight: 700; color: var(--green); font-size: 14px; border-top: 2px solid var(--green-tint-2); padding-top: 14px; display: block; }
+    .step h4 { font-size: 17px; margin: 12px 0 7px; }
+    .step p { font-size: 14px; color: var(--muted); }
+
+    .hood-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-top: 36px; }
+    .hood { position: relative; border-radius: var(--r-lg); overflow: hidden; aspect-ratio: 4/3; cursor: pointer; border: 1px solid var(--line); }
+    .hood .ph { position: absolute; inset: 0; }
+    .hood .h-label { position: absolute; left: 0; right: 0; bottom: 0; padding: 30px 16px 14px; background: linear-gradient(transparent, rgba(7,62,52,.78)); color: #fff; }
+    .hood .h-label b { font-size: 16px; font-weight: 700; }
+    .hood .h-label span { display: block; font-size: 12.5px; opacity: .85; }
+    .hood:hover .ph { filter: brightness(.95); }
+
+    .cta { background: var(--green-deep); border-radius: var(--r-xl); padding: 56px; color: #fff; display: grid; grid-template-columns: 1.4fr 1fr; gap: 32px; align-items: center; }
+    .cta h2 { font-size: 36px; letter-spacing: -.03em; }
+    .cta p { color: #b6d2c9; margin-top: 14px; font-size: 16px; }
+    .cta .cta-actions { display: flex; flex-direction: column; gap: 12px; }
+
+    .sec-head { max-width: 620px; }
+    .sec-head h2 { font-size: 34px; letter-spacing: -.03em; margin-top: 10px; }
+    .sec-head p { color: var(--muted); margin-top: 12px; font-size: 16px; }
+    .row-between { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; }
+
+    @media (max-width: 900px) {
+      .hero-inner { grid-template-columns: 1fr; }
+      .hero-visual { display: none; }
+      .hero h1 { font-size: 40px; }
+      .val-grid, .how, .hood-grid { grid-template-columns: 1fr 1fr; }
+      .cta { grid-template-columns: 1fr; padding: 36px; }
+      .hero-search { flex-wrap: wrap; }
+    }
+    @media (max-width: 560px) { .val-grid, .how, .hood-grid { grid-template-columns: 1fr; } .hero h1 { font-size: 34px; } }
+  </style>
+</head>
+<body>
+  <div id="nav"></div>
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="wrap hero-inner">
+      <div>
+        <span class="eyebrow">Nairobi · verified rentals</span>
+        <h1>Find a home you can <span class="hl">actually trust.</span></h1>
+        <p class="lead">KejaHunt connects urban renters with <strong>verified</strong> listings — real prices, real locations, real landlords. No brokers, no fake photos, no endless walking from plot to plot.</p>
+
+        <form class="hero-search" id="heroSearch">
+          <label class="hs-field">
+            <span style="color:var(--muted)" id="hsPinIcon"></span>
+            <select name="hood">
+              <option value="">Any area</option>
+            </select>
+          </label>
+          <div class="hs-div"></div>
+          <label class="hs-field">
+            <select name="type">
+              <option value="">Any type</option>
+            </select>
+          </label>
+          <div class="hs-div"></div>
+          <label class="hs-field">
+            <select name="budget">
+              <option value="">Any budget</option>
+              <option value="10000">Under 10k</option>
+              <option value="20000">Under 20k</option>
+              <option value="40000">Under 40k</option>
+              <option value="100000">Under 100k</option>
+            </select>
+          </label>
+          <button class="btn btn-primary" type="submit" id="hsBtn">Search</button>
+        </form>
+
+        <div class="hero-trust">
+          <div id="t1"></div>
+          <div id="t2"></div>
+          <div id="t3"></div>
+        </div>
+      </div>
+
+      <div class="hero-visual">
+        <div class="hv-card hv-main">
+          <div class="ph"><span class="ph-label">hero · apartment exterior</span></div>
+          <div style="padding:16px 18px">
+            <div style="font-weight:800;font-size:20px">KES 42,000 <span style="font-size:13px;color:var(--muted);font-weight:600">/ month</span></div>
+            <div style="font-weight:700;margin-top:3px">Modern 1BR · Kilimani</div>
+            <div style="color:var(--muted);font-size:13px;margin-top:4px" id="hvLoc"></div>
+          </div>
+        </div>
+        <div class="hv-card hv-float">
+          <div class="ph" style="height:90px;border-radius:10px"><span class="ph-label">photo</span></div>
+          <div style="font-weight:800;margin-top:10px">KES 9,500</div>
+          <div style="font-size:13px;color:var(--muted)">Bedsitter · Nairobi West</div>
+        </div>
+        <div class="hv-badge" id="hvBadge"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MARQUEE -->
+  <div class="marquee">
+    <div class="row" id="marquee"></div>
+  </div>
+
+  <!-- VALUE PROPS -->
+  <section class="section wrap" id="why">
+    <div class="sec-head">
+      <span class="eyebrow">Why KejaHunt</span>
+      <h2>The rental market, finally transparent.</h2>
+      <p>Built for the way Kenyans actually rent — tackling the information asymmetry, listing fraud, and poor communication that make house-hunting so painful.</p>
+    </div>
+    <div class="val-grid">
+      <div class="val">
+        <div class="v-ic" id="v1"></div>
+        <h3>Every listing verified</h3>
+        <p>Landlords upload proof of ownership. Our admin team reviews each listing before it goes live — so you never view a home that doesn't exist.</p>
+      </div>
+      <div class="val">
+        <div class="v-ic" id="v2"></div>
+        <h3>Search by location</h3>
+        <p>Filter by neighborhood, budget, bedrooms and amenities, then see exactly where each home sits on the map. Find a place near work, school or your matatu route.</p>
+      </div>
+      <div class="val">
+        <div class="v-ic" id="v3"></div>
+        <h3>Message safely in-app</h3>
+        <p>Talk to landlords directly through KejaHunt — no sharing your number with strangers, no broker middlemen inflating the rent.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="section wrap" id="how" style="padding-top:0">
+    <div class="sec-head">
+      <span class="eyebrow">How it works</span>
+      <h2>From search to keys in four steps.</h2>
+    </div>
+    <div class="how">
+      <div class="step"><span class="n">01</span><h4>Search verified homes</h4><p>Set your area, budget and must-have amenities. Browse only listings we've confirmed are real.</p></div>
+      <div class="step"><span class="n">02</span><h4>Compare on the map</h4><p>See prices and locations side by side. Read honest reviews from past tenants.</p></div>
+      <div class="step"><span class="n">03</span><h4>Message the landlord</h4><p>Ask questions and book a viewing right inside the app — safely and on your terms.</p></div>
+      <div class="step"><span class="n">04</span><h4>Move in with confidence</h4><p>No surprise costs, no fake photos. Then leave a review to help the next renter.</p></div>
+    </div>
+  </section>
+
+  <!-- FEATURED LISTINGS -->
+  <section class="section" style="background:var(--bg-2)">
+    <div class="wrap">
+      <div class="row-between">
+        <div class="sec-head">
+          <span class="eyebrow">Fresh on KejaHunt</span>
+          <h2>Featured verified rentals</h2>
+        </div>
+        <a href="listings.html" class="btn btn-ghost">View all rentals <span id="arr1"></span></a>
+      </div>
+      <div class="listing-grid" id="featured" style="margin-top:36px"></div>
+    </div>
+  </section>
+
+  <!-- NEIGHBORHOODS -->
+  <section class="section wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Explore Nairobi</span>
+      <h2>Popular neighborhoods</h2>
+      <p>From budget bedsitters in Kayole to executive maisonettes in Westlands — explore homes across the city.</p>
+    </div>
+    <div class="hood-grid" id="hoods"></div>
+  </section>
+
+  <!-- CTA -->
+  <section class="wrap" style="padding-bottom:80px">
+    <div class="cta">
+      <div>
+        <span class="eyebrow" style="color:#7fe3c4">For landlords & agents</span>
+        <h2>Have a property to rent out?</h2>
+        <p>List it free, reach thousands of verified renters, and fill your vacancy faster — without paying a broker. Get a verified badge once we confirm your ownership.</p>
+      </div>
+      <div class="cta-actions">
+        <a href="register.html" class="btn btn-primary btn-lg btn-block">List your property</a>
+        <a href="landlord.html" class="btn btn-ghost btn-lg btn-block" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.25)">Go to landlord dashboard</a>
+      </div>
+    </div>
+  </section>
+
+  <div id="footer"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    KejaUI.mountNav('home');
+    KejaUI.mountFooter();
+
+    // icons
+    document.getElementById('hsPinIcon').innerHTML = ICN.pin;
+    document.getElementById('v1').innerHTML = ICN.shield;
+    document.getElementById('v2').innerHTML = ICN.pin;
+    document.getElementById('v3').innerHTML = ICN.msg;
+    document.getElementById('arr1').innerHTML = ICN.arrow;
+    document.getElementById('hvLoc').innerHTML = ICN.pin + ' Yaya area · gated court';
+    document.getElementById('hvBadge').innerHTML = ICN.shield + ' Verified listing';
+    document.getElementById('t1').innerHTML = ICN.check + ' 100% ownership-checked';
+    document.getElementById('t2').innerHTML = ICN.check + ' KES 3,800 – 95,000 / mo';
+    document.getElementById('t3').innerHTML = ICN.check + ' Data Protection Act compliant';
+
+    // populate hero search selects
+    const hoodSel = document.querySelector('#heroSearch [name=hood]');
+    KH.NEIGHBORHOODS.forEach(n => hoodSel.append(new Option(n.name, n.name)));
+    const typeSel = document.querySelector('#heroSearch [name=type]');
+    KH.TYPES.forEach(t => typeSel.append(new Option(t, t)));
+
+    document.getElementById('heroSearch').addEventListener('submit', e => {
+      e.preventDefault();
+      const f = new FormData(e.target);
+      const p = new URLSearchParams();
+      if (f.get('hood')) p.set('hood', f.get('hood'));
+      if (f.get('type')) p.set('type', f.get('type'));
+      if (f.get('budget')) p.set('max', f.get('budget'));
+      location.href = 'listings.html?' + p.toString();
+    });
+
+    // marquee
+    const stats = KH.stats();
+    const items = [
+      ICN.shield + ' ' + stats.verified + ' verified listings live',
+      ICN.users + ' ' + stats.users + ' renters & landlords',
+      ICN.pin + ' 12 Nairobi neighborhoods',
+      ICN.check + ' No broker fees, ever',
+      ICN.star + ' Real tenant reviews',
+    ];
+    const rowHTML = items.map(i => `<span>${i}</span>`).join('');
+    document.getElementById('marquee').innerHTML = rowHTML + rowHTML;
+
+    // featured
+    const feat = document.getElementById('featured');
+    KH.verifiedListings().slice(0,6).forEach(l => feat.appendChild(KejaUI.listingCard(l)));
+
+    // neighborhoods (top 8 by listing count)
+    const counts = {};
+    KH.verifiedListings().forEach(l => counts[l.hood] = (counts[l.hood]||0)+1);
+    const hoodWrap = document.getElementById('hoods');
+    KH.NEIGHBORHOODS.slice(0,8).forEach(n => {
+      const c = counts[n.name] || 0;
+      const card = KejaUI.el(`
+        <a class="hood" href="listings.html?hood=${encodeURIComponent(n.name)}">
+          <div class="ph"><span class="ph-label">photo · ${n.name.toLowerCase()}</span></div>
+          <div class="h-label"><b>${n.name}</b><span>${c} verified ${c===1?'home':'homes'}</span></div>
+        </a>`);
+      hoodWrap.appendChild(card);
+    });
+  </script>
+</body>
+</html>

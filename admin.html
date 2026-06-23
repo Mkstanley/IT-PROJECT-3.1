@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin dashboard — KejaHunt</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .admin-view { display:none; }
+    .admin-view.on { display:block; animation: fade .25s; }
+    @keyframes fade { from { opacity:0; transform:translateY(6px); } }
+
+    .verify-card { display:grid; grid-template-columns: 200px 1fr auto; gap:20px; padding:18px; border:1px solid var(--line); border-radius:var(--r-lg); margin-bottom:16px; background:#fff; box-shadow:var(--sh-1); align-items:start; }
+    .verify-card .vc-img { aspect-ratio:4/3; border-radius:var(--r); }
+    .verify-card h3 { font-size:17px; }
+    .vc-meta { display:flex; flex-wrap:wrap; gap:8px 18px; margin:10px 0; font-size:13px; color:var(--ink-2); }
+    .vc-meta span { display:flex; align-items:center; gap:6px; }
+    .vc-meta svg { width:14px; height:14px; color:var(--muted); }
+    .vc-docs { background:var(--bg); border-radius:var(--r-sm); padding:10px 14px; font-size:13px; display:flex; align-items:center; gap:10px; margin-top:10px; }
+    .vc-docs svg { width:16px; height:16px; color:var(--green-dark); }
+    .vc-actions { display:flex; flex-direction:column; gap:8px; min-width:140px; }
+    .ll-mini { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); margin-top:8px; }
+    .ll-mini .avatar { width:28px;height:28px;font-size:11px; }
+
+    .bar-chart { display:flex; align-items:flex-end; gap:14px; height:200px; padding:20px 0 0; }
+    .bar-chart .bar-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:8px; height:100%; justify-content:flex-end; }
+    .bar-chart .bar { width:100%; max-width:46px; background:var(--green); border-radius:6px 6px 0 0; transition:height .6s ease; position:relative; }
+    .bar-chart .bar.alt { background:var(--green-tint-2); }
+    .bar-chart .bar-label { font-size:11px; color:var(--muted); font-weight:600; }
+    .bar-chart .bar-val { font-size:11px; font-weight:800; color:var(--ink); }
+    .donut { width:160px; height:160px; border-radius:50%; }
+    .legend-row { display:flex; align-items:center; gap:8px; font-size:13.5px; margin-bottom:8px; }
+    .legend-dot { width:11px; height:11px; border-radius:3px; flex:none; }
+    .pill-status { cursor:pointer; }
+  </style>
+</head>
+<body>
+  <div id="nav"></div>
+  <div id="root"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    KejaUI.mountNav('admin');
+    let u = KH.currentUser();
+    if (!u || u.role !== 'admin') { KH.loginAs('u_admin'); u = KH.currentUser(); }
+
+    let view = 'overview';
+
+    function shell() {
+      const s = KH.stats();
+      document.getElementById('root').innerHTML = `
+        <div class="dash">
+          <aside class="dash-side">
+            <div class="ds-group">
+              <div class="ds-label">Administration</div>
+              <div class="ds-link" data-view="overview">${ICN.grid} Overview</div>
+              <div class="ds-link" data-view="queue">${ICN.shield} Verification ${s.pending?`<span class="ds-count">${s.pending}</span>`:''}</div>
+              <div class="ds-link" data-view="listings">${ICN.list} All listings</div>
+              <div class="ds-link" data-view="users">${ICN.users} Users</div>
+              <div class="ds-link" data-view="analytics">${ICN.chart} Analytics</div>
+              <div class="ds-link" data-view="audit">${ICN.flag} Audit log</div>
+            </div>
+            <div class="ds-group">
+              <div class="ds-label">Site</div>
+              <a class="ds-link" href="index.html">${ICN.home} View site</a>
+              <a class="ds-link" href="listings.html">${ICN.search} Browse listings</a>
+            </div>
+            <button class="btn btn-ghost btn-block btn-sm" id="resetBtn" style="margin-top:8px">Reset demo data</button>
+          </aside>
+          <main class="dash-main" id="main"></main>
+        </div>
+      `;
+      document.querySelectorAll('.ds-link[data-view]').forEach(b => b.addEventListener('click', () => { view = b.dataset.view; shell(); }));
+      document.querySelectorAll('.ds-link[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view===view));
+      document.getElementById('resetBtn').addEventListener('click', () => { KH.reset(); KejaUI.toast('Demo data reset'); setTimeout(()=>location.reload(),700); });
+      renderView();
+    }
+
+    function renderView() {
+      const main = document.getElementById('main');
+      const s = KH.stats();
+      if (view === 'overview') return renderOverview(main, s);
+      if (view === 'queue') return renderQueue(main);
+      if (view === 'listings') return renderListings(main);
+      if (view === 'users') return renderUsers(main);
+      if (view === 'analytics') return renderAnalytics(main, s);
+      if (view === 'audit') return renderAudit(main);
+    }
+
+    /* ---------- overview ---------- */
+    function renderOverview(main, s) {
+      main.innerHTML = `
+        <div class="dash-head"><div><h1>Platform overview</h1><p>Monitor listings, verification and user activity across KejaHunt.</p></div>
+          <span class="badge badge-verified">${ICN.shield} Admin · ${u.name}</span></div>
+        <div class="stat-grid" style="margin-bottom:24px">
+          <div class="stat"><div class="s-top"><div class="s-ic" style="background:var(--green-tint);color:var(--green-dark)">${ICN.home}</div><span class="s-delta up">+3 this wk</span></div><div class="s-val">${s.total}</div><div class="s-label">Total listings</div></div>
+          <div class="stat"><div class="s-top"><div class="s-ic" style="background:var(--amber-tint);color:var(--amber)">${ICN.bell}</div></div><div class="s-val">${s.pending}</div><div class="s-label">Awaiting verification</div></div>
+          <div class="stat"><div class="s-top"><div class="s-ic" style="background:var(--blue-tint);color:var(--blue)">${ICN.users}</div><span class="s-delta up">+12%</span></div><div class="s-val">${s.users}</div><div class="s-label">Registered users</div></div>
+          <div class="stat"><div class="s-top"><div class="s-ic" style="background:var(--green-tint);color:var(--green-dark)">${ICN.msg}</div></div><div class="s-val">${s.threads}</div><div class="s-label">Active conversations</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:20px">
+          <div class="panel">
+            <div class="panel-head"><h3>Verification queue</h3><button class="btn btn-soft btn-sm" id="goQueue">Open queue</button></div>
+            <div style="padding:8px" id="queuePreview"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h3>Listing status</h3></div>
+            <div style="padding:22px;display:flex;align-items:center;gap:24px">
+              <div class="donut" id="donut"></div>
+              <div>
+                <div class="legend-row"><span class="legend-dot" style="background:var(--green)"></span> Verified · <b style="margin-left:4px">${s.verified}</b></div>
+                <div class="legend-row"><span class="legend-dot" style="background:var(--amber)"></span> Pending · <b style="margin-left:4px">${s.pending}</b></div>
+                <div class="legend-row"><span class="legend-dot" style="background:var(--red)"></span> Rejected · <b style="margin-left:4px">${s.rejected}</b></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      // donut
+      const total = s.total || 1;
+      const vp = (s.verified/total)*100, pp = (s.pending/total)*100;
+      document.getElementById('donut').style.background =
+        `conic-gradient(var(--green) 0 ${vp}%, var(--amber) ${vp}% ${vp+pp}%, var(--red) ${vp+pp}% 100%)`;
+      document.getElementById('donut').style.cssText += ';-webkit-mask:radial-gradient(circle, transparent 52%, #000 53%);mask:radial-gradient(circle, transparent 52%, #000 53%)';
+      // queue preview
+      const qp = document.getElementById('queuePreview');
+      const pending = KH.listings({status:'pending'});
+      if (!pending.length) qp.innerHTML = `<div class="empty" style="padding:30px"><p>Queue is clear — nothing awaiting review. 🎉</p></div>`;
+      pending.slice(0,3).forEach(l => {
+        qp.appendChild(KejaUI.el(`<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line-2)">
+          <div class="t-thumb ph"></div>
+          <div style="flex:1"><div style="font-weight:700;font-size:14px">${l.title}</div><div class="muted" style="font-size:12.5px">${l.hood} · ${KejaUI.fmtKES(l.rent)}/mo</div></div>
+          <span class="badge badge-pending">Pending</span></div>`));
+      });
+      document.getElementById('goQueue').addEventListener('click', () => { view='queue'; shell(); });
+    }
+
+    /* ---------- verification queue ---------- */
+    function renderQueue(main) {
+      const pending = KH.listings({status:'pending'});
+      main.innerHTML = `
+        <div class="dash-head"><div><h1>Verification queue</h1><p>Review ownership proof and listing details before they go live.</p></div>
+          <span class="badge badge-pending">${pending.length} awaiting</span></div>
+        <div id="queueList"></div>`;
+      const list = document.getElementById('queueList');
+      if (!pending.length) { list.innerHTML = `<div class="empty"><div class="e-ic">${ICN.check}</div><h3 style="color:var(--ink)">All caught up</h3><p>No listings are awaiting verification right now.</p></div>`; return; }
+      pending.forEach(l => {
+        const ll = KH.user(l.landlordId);
+        const card = KejaUI.el(`<div class="verify-card">
+          <div class="vc-img ph"><span class="ph-label">photo</span></div>
+          <div>
+            <h3>${l.title}</h3>
+            <div class="vc-meta">
+              <span>${ICN.pin} ${l.hood}</span><span>${ICN.bed} ${l.bedrooms===0?'Studio':l.bedrooms+' bed'}</span>
+              <span>${ICN.home} ${l.type}</span><span style="font-weight:800;color:var(--ink)">${KejaUI.fmtKES(l.rent)}/mo</span>
+            </div>
+            <p class="muted" style="font-size:13.5px">${l.desc.slice(0,140)}…</p>
+            <div class="vc-docs">${ICN.shield} Ownership document attached · <a href="#" style="color:var(--green-dark);font-weight:700">View title deed.pdf</a></div>
+            <div class="ll-mini"><span class="avatar">${KejaUI.initials(ll.name)}</span> Submitted by ${ll.name} ${ll.verified?'· ✓ verified owner':'· ⚠ unverified owner'} · ${l.createdAt}</div>
+          </div>
+          <div class="vc-actions">
+            <button class="btn btn-primary" data-approve="${l.id}">${ICN.check} Approve</button>
+            <button class="btn btn-ghost" data-reject="${l.id}">Reject</button>
+            <a class="btn btn-ghost btn-sm" href="property.html?id=${l.id}" target="_blank">${ICN.eye} Preview</a>
+          </div>
+        </div>`);
+        list.appendChild(card);
+      });
+      list.querySelectorAll('[data-approve]').forEach(b => b.addEventListener('click', () => {
+        KH.setStatus(b.dataset.approve, 'verified'); KejaUI.toast('Listing approved & published', ICN.shield); shell();
+      }));
+      list.querySelectorAll('[data-reject]').forEach(b => b.addEventListener('click', () => {
+        KejaUI.modal(`<div class="modal"><div class="modal-head"><h3>Reject listing</h3><button class="modal-x" onclick="KejaUI.closeModal()">${ICN.x}</button></div><div class="modal-body"><div class="field"><label>Reason (shown to the landlord)</label><textarea class="textarea" id="rejReason" placeholder="e.g. Ownership document unclear — please re-upload.">Ownership document could not be verified. Please re-upload a clear title deed or tenancy agreement.</textarea></div><button class="btn btn-danger btn-block" id="confirmReject">Reject listing</button></div></div>`);
+        document.getElementById('confirmReject').addEventListener('click', () => {
+          KH.setStatus(b.dataset.reject, 'rejected', document.getElementById('rejReason').value); KejaUI.closeModal(); KejaUI.toast('Listing rejected', ICN.x); shell();
+        });
+      }));
+    }
+
+    /* ---------- all listings ---------- */
+    function renderListings(main) {
+      main.innerHTML = `
+        <div class="dash-head"><div><h1>All listings</h1><p>Every listing on the platform across all statuses.</p></div>
+          <div class="seg" id="statusFilter"><button data-s="" class="on">All</button><button data-s="verified">Verified</button><button data-s="pending">Pending</button><button data-s="rejected">Rejected</button></div></div>
+        <div class="panel"><table class="table"><thead><tr><th>Listing</th><th>Area</th><th>Type</th><th>Rent</th><th>Owner</th><th>Status</th><th></th></tr></thead><tbody id="rows"></tbody></table></div>`;
+      let filter = '';
+      function draw() {
+        const rows = document.getElementById('rows');
+        rows.innerHTML = '';
+        let arr = KH.listings();
+        if (filter) arr = arr.filter(l=>l.status===filter);
+        arr.forEach(l => {
+          const ll = KH.user(l.landlordId);
+          const tr = KejaUI.el(`<tr>
+            <td><div class="t-cell"><div class="t-thumb ph"></div><div><div style="font-weight:700">${l.title.slice(0,30)}</div><div class="muted" style="font-size:12px">${l.createdAt}</div></div></div></td>
+            <td>${l.hood}</td><td>${l.type}</td><td style="font-weight:700">${KejaUI.fmtKES(l.rent)}</td>
+            <td>${ll.name}</td><td>${KejaUI.statusBadge(l.status)}</td>
+            <td><div style="display:flex;gap:6px;justify-content:flex-end">
+              ${l.status!=='verified'?`<button class="btn btn-soft btn-sm" data-ap="${l.id}">Approve</button>`:''}
+              <a class="btn btn-ghost btn-sm" href="property.html?id=${l.id}" target="_blank">View</a>
+            </div></td></tr>`);
+          rows.appendChild(tr);
+        });
+        rows.querySelectorAll('[data-ap]').forEach(b=>b.addEventListener('click',()=>{KH.setStatus(b.dataset.ap,'verified');KejaUI.toast('Approved',ICN.shield);draw();}));
+      }
+      document.querySelectorAll('#statusFilter button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#statusFilter button').forEach(x=>x.classList.remove('on'));b.classList.add('on');filter=b.dataset.s;draw();}));
+      draw();
+    }
+
+    /* ---------- users ---------- */
+    function renderUsers(main) {
+      main.innerHTML = `
+        <div class="dash-head"><div><h1>Users</h1><p>Tenants, landlords and agents registered on KejaHunt.</p></div></div>
+        <div class="panel"><table class="table"><thead><tr><th>User</th><th>Role</th><th>Contact</th><th>Joined</th><th>Status</th><th></th></tr></thead><tbody id="urows"></tbody></table></div>`;
+      const rows = document.getElementById('urows');
+      KH.users().forEach(usr => {
+        const listings = KH.listings().filter(l=>l.landlordId===usr.id).length;
+        const tr = KejaUI.el(`<tr>
+          <td><div class="t-cell"><span class="avatar" style="width:38px;height:38px">${KejaUI.initials(usr.name)}</span><div><div style="font-weight:700">${usr.name}</div><div class="muted" style="font-size:12px">${listings?listings+' listings':usr.role==='tenant'?'renter':'—'}</div></div></div></td>
+          <td style="text-transform:capitalize"><span class="badge badge-neutral">${usr.role}</span></td>
+          <td><div style="font-size:13px">${usr.email}</div><div class="muted" style="font-size:12px">${usr.phone}</div></td>
+          <td>${usr.joined}</td>
+          <td>${usr.verified?`<span class="badge badge-verified">${ICN.shield} Verified</span>`:'<span class="badge badge-pending">Unverified</span>'}</td>
+          <td><div style="display:flex;gap:6px;justify-content:flex-end">${!usr.verified&&usr.role!=='tenant'?`<button class="btn btn-soft btn-sm" data-verify="${usr.id}">Verify</button>`:''}<button class="btn btn-ghost btn-sm">Manage</button></div></td>
+        </tr>`);
+        rows.appendChild(tr);
+      });
+      rows.querySelectorAll('[data-verify]').forEach(b=>b.addEventListener('click',()=>{KH.user(b.dataset.verify).verified=true;KH.all();localStorage.setItem('kejahunt_v1',JSON.stringify(KH.all()));KejaUI.toast('User verified',ICN.shield);renderUsers(main);}));
+    }
+
+    /* ---------- analytics ---------- */
+    function renderAnalytics(main, s) {
+      const byHood = {};
+      KH.listings().forEach(l => byHood[l.hood] = (byHood[l.hood]||0)+1);
+      const top = Object.entries(byHood).sort((a,b)=>b[1]-a[1]).slice(0,8);
+      const maxV = Math.max(...top.map(t=>t[1]),1);
+      // price bands
+      const bands = [['<10k',0],['10–20k',0],['20–40k',0],['40k+',0]];
+      KH.verifiedListings().forEach(l=>{ if(l.rent<10000)bands[0][1]++; else if(l.rent<20000)bands[1][1]++; else if(l.rent<40000)bands[2][1]++; else bands[3][1]++; });
+      const maxB = Math.max(...bands.map(b=>b[1]),1);
+
+      main.innerHTML = `
+        <div class="dash-head"><div><h1>Analytics</h1><p>Market insight into the listings on KejaHunt.</p></div></div>
+        <div class="stat-grid" style="margin-bottom:24px">
+          <div class="stat"><div class="s-label">Avg. verified rent</div><div class="s-val" style="font-size:24px">${KejaUI.fmtKES(Math.round(KH.verifiedListings().reduce((a,l)=>a+l.rent,0)/(s.verified||1)))}</div></div>
+          <div class="stat"><div class="s-label">Verification rate</div><div class="s-val">${Math.round(s.verified/(s.total||1)*100)}%</div></div>
+          <div class="stat"><div class="s-label">Landlords & agents</div><div class="s-val">${s.landlords}</div></div>
+          <div class="stat"><div class="s-label">Avg. rating</div><div class="s-val">${(KH.verifiedListings().filter(l=>l.rating).reduce((a,l)=>a+l.rating,0)/(KH.verifiedListings().filter(l=>l.rating).length||1)).toFixed(1)}</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+          <div class="panel"><div class="panel-head"><h3>Listings by neighborhood</h3></div><div style="padding:20px"><div class="bar-chart">${top.map(([h,v])=>`<div class="bar-col"><span class="bar-val">${v}</span><div class="bar" style="height:${(v/maxV)*100}%"></div><span class="bar-label">${h.slice(0,7)}</span></div>`).join('')}</div></div></div>
+          <div class="panel"><div class="panel-head"><h3>Rent distribution</h3></div><div style="padding:20px"><div class="bar-chart">${bands.map(([b,v])=>`<div class="bar-col"><span class="bar-val">${v}</span><div class="bar alt" style="height:${(v/maxB)*100}%"></div><span class="bar-label">${b}</span></div>`).join('')}</div></div></div>
+        </div>`;
+    }
+
+    /* ---------- audit ---------- */
+    function renderAudit(main) {
+      main.innerHTML = `
+        <div class="dash-head"><div><h1>Audit log</h1><p>A record of moderation actions taken by administrators.</p></div></div>
+        <div class="panel"><table class="table"><thead><tr><th>Time</th><th>Admin</th><th>Action</th><th>Target</th></tr></thead><tbody id="alog"></tbody></table></div>`;
+      const log = KH.auditLog();
+      const tb = document.getElementById('alog');
+      log.forEach(e => tb.appendChild(KejaUI.el(`<tr><td class="mono" style="font-size:12.5px;color:var(--muted)">${e.at}</td><td>${e.who}</td><td><span class="badge ${/Approved/.test(e.action)?'badge-verified':/Rejected/.test(e.action)?'badge-rejected':'badge-neutral'}">${e.action}</span></td><td style="font-weight:600">${e.target}</td></tr>`)));
+    }
+
+    shell();
+    KejaUI.mountFooter();
+  </script>
+</body>
+</html>

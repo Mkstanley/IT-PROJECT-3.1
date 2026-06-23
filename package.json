@@ -1,0 +1,16 @@
+{
+  "name": "kejahunt",
+  "version": "1.0.0",
+  "description": "Verified rentals platform for urban Kenya — Strathmore BBIT 2026 project. Static front-end with a localStorage-backed mock data layer.",
+  "scripts": {
+    "test:smoke": "node run-smoke.js",
+    "test:flows": "node flows.test.js",
+    "test": "node run-smoke.js && node flows.test.js",
+    "serve": "python3 -m http.server 8000"
+  },
+  "keywords": ["rentals", "kenya", "nairobi", "real-estate", "bbit", "strathmore"],
+  "license": "MIT",
+  "devDependencies": {
+    "jsdom": "^24.1.3"
+  }
+}

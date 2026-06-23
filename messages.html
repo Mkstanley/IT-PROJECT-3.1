@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Messages — KejaHunt</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .inbox { display:grid; grid-template-columns: 340px 1fr; height: calc(100vh - var(--nav-h)); }
+    .thread-list { border-right:1px solid var(--line); background:#fff; overflow-y:auto; }
+    .tl-head { padding:20px 20px 14px; border-bottom:1px solid var(--line-2); position:sticky; top:0; background:#fff; z-index:2; }
+    .tl-head h1 { font-size:20px; }
+    .thread-item { display:flex; gap:12px; padding:16px 20px; border-bottom:1px solid var(--line-2); cursor:pointer; align-items:center; }
+    .thread-item:hover { background:var(--bg); }
+    .thread-item.active { background:var(--green-tint); }
+    .thread-item .avatar { width:46px;height:46px;flex:none; }
+    .thread-item .ti-main { flex:1; min-width:0; }
+    .thread-item .ti-name { font-weight:700; font-size:14.5px; display:flex; justify-content:space-between; gap:8px; }
+    .thread-item .ti-name .t { font-size:11px; color:var(--muted); font-weight:600; white-space:nowrap; }
+    .thread-item .ti-prop { font-size:12px; color:var(--green-dark); font-weight:600; margin:1px 0; }
+    .thread-item .ti-last { font-size:13px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+    .convo { display:flex; flex-direction:column; background:var(--bg); }
+    .convo-head { padding:16px 24px; background:#fff; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:12px; }
+    .convo-head .avatar { width:44px;height:44px; }
+    .convo-head .ch-prop { margin-left:auto; }
+    .convo-body { flex:1; overflow-y:auto; padding:24px; display:flex; flex-direction:column; gap:12px; }
+    .bubble { max-width:64%; padding:11px 15px; border-radius:16px; font-size:14.5px; line-height:1.5; box-shadow:var(--sh-1); }
+    .bubble .b-time { font-size:11px; opacity:.6; margin-top:5px; display:block; }
+    .bubble.them { background:#fff; border:1px solid var(--line); align-self:flex-start; border-bottom-left-radius:5px; }
+    .bubble.me { background:var(--green); color:#fff; align-self:flex-end; border-bottom-right-radius:5px; }
+    .day-sep { text-align:center; font-size:12px; color:var(--muted); margin:4px 0; font-weight:600; }
+    .composer { padding:16px 24px; background:#fff; border-top:1px solid var(--line); display:flex; gap:10px; align-items:flex-end; }
+    .composer textarea { flex:1; resize:none; border:1px solid var(--line); border-radius:var(--r); padding:11px 14px; font-size:14.5px; max-height:120px; box-shadow:var(--sh-1); }
+    .composer textarea:focus { outline:none; border-color:var(--green); box-shadow:0 0 0 3px var(--green-tint); }
+    .convo-empty { flex:1; display:grid; place-items:center; text-align:center; color:var(--muted); }
+    @media (max-width: 800px) {
+      .inbox { grid-template-columns: 1fr; }
+      .convo { display:none; }
+      .inbox.show-convo .thread-list { display:none; }
+      .inbox.show-convo .convo { display:flex; }
+    }
+  </style>
+</head>
+<body>
+  <div id="nav"></div>
+  <div id="root"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    KejaUI.mountNav('messages');
+    let u = KH.currentUser();
+    if (!u) { KH.loginAs('u_t1'); u = KH.currentUser(); }
+
+    let threads = KH.threads(u.id);
+    let activeId = KejaUI.qs('t') || (threads[0] && threads[0].id);
+
+    document.getElementById('root').innerHTML = `
+      <div class="inbox" id="inbox">
+        <aside class="thread-list">
+          <div class="tl-head"><h1>Messages</h1><p class="muted" style="font-size:13px">${threads.length} ${threads.length===1?'conversation':'conversations'}</p></div>
+          <div id="threadList"></div>
+        </aside>
+        <section class="convo" id="convo"></section>
+      </div>
+    `;
+
+    function otherParty(t) {
+      return u.id === t.tenantId ? KH.user(t.landlordId) : KH.user(t.tenantId);
+    }
+
+    function renderThreads() {
+      const wrap = document.getElementById('threadList');
+      wrap.innerHTML = '';
+      if (!threads.length) { wrap.innerHTML = `<div class="empty" style="padding:40px 20px"><p>No conversations yet. Message a landlord from any listing.</p></div>`; return; }
+      threads.forEach(t => {
+        const other = otherParty(t);
+        const l = KH.listing(t.listingId);
+        const last = t.messages[t.messages.length-1];
+        const item = KejaUI.el(`<div class="thread-item ${t.id===activeId?'active':''}" data-id="${t.id}">
+          <span class="avatar">${KejaUI.initials(other.name)}</span>
+          <div class="ti-main">
+            <div class="ti-name"><span>${other.name}</span><span class="t">${last?last.at.slice(11):''}</span></div>
+            <div class="ti-prop">${l?l.title.slice(0,34):'Listing'}</div>
+            <div class="ti-last">${last?last.text:''}</div>
+          </div>
+        </div>`);
+        item.addEventListener('click', () => { activeId = t.id; renderThreads(); renderConvo(); document.getElementById('inbox').classList.add('show-convo'); });
+        wrap.appendChild(item);
+      });
+    }
+
+    function renderConvo() {
+      const convo = document.getElementById('convo');
+      const t = KH.thread(activeId);
+      if (!t) { convo.innerHTML = `<div class="convo-empty"><div><div class="e-ic" style="margin:0 auto 14px;width:56px;height:56px;border-radius:16px;background:var(--green-tint);color:var(--green-dark);display:grid;place-items:center">${ICN.msg}</div><h3 style="color:var(--ink)">Select a conversation</h3><p>Your messages with landlords appear here.</p></div></div>`; return; }
+      const other = otherParty(t);
+      const l = KH.listing(t.listingId);
+      convo.innerHTML = `
+        <div class="convo-head">
+          <button class="icon-btn" id="backBtn" style="display:none;width:36px;height:36px;border:1px solid var(--line);border-radius:9px">${ICN.arrow}</button>
+          <span class="avatar">${KejaUI.initials(other.name)}</span>
+          <div><div style="font-weight:700">${other.name}</div><div class="muted" style="font-size:12.5px">${other.role==='agent'?'Verified agent':other.role==='landlord'?'Property owner':'Renter'} ${other.verified?'· ✓':''}</div></div>
+          ${l?`<a href="property.html?id=${l.id}" class="btn btn-ghost btn-sm ch-prop">${ICN.home} ${KejaUI.fmtKES(l.rent)}/mo</a>`:''}
+        </div>
+        <div class="convo-body" id="body"></div>
+        <div class="composer">
+          <textarea id="msgInput" rows="1" placeholder="Type a message..."></textarea>
+          <button class="btn btn-primary" id="sendBtn">Send</button>
+        </div>
+      `;
+      const body = document.getElementById('body');
+      let lastDay = '';
+      t.messages.forEach(m => {
+        const day = m.at.slice(0,10);
+        if (day !== lastDay) { body.appendChild(KejaUI.el(`<div class="day-sep">${day}</div>`)); lastDay = day; }
+        const mine = m.from === u.id;
+        body.appendChild(KejaUI.el(`<div class="bubble ${mine?'me':'them'}">${m.text}<span class="b-time">${m.at.slice(11)}</span></div>`));
+      });
+      body.scrollTop = body.scrollHeight;
+
+      function send() {
+        const input = document.getElementById('msgInput');
+        const text = input.value.trim();
+        if (!text) return;
+        KH.sendMessage(t.id, u.id, text);
+        // simulate a reply from the other party
+        renderConvo();
+        renderThreads();
+        setTimeout(() => {
+          const replies = ['Sure, let me check and get back to you.','Yes, that works for me.','Thanks for reaching out! When would you like to view?','Noted. The unit is still available.'];
+          KH.sendMessage(t.id, other.id, replies[Math.floor(Math.random()*replies.length)]);
+          threads = KH.threads(u.id);
+          renderConvo(); renderThreads();
+        }, 1100);
+      }
+      document.getElementById('sendBtn').addEventListener('click', send);
+      document.getElementById('msgInput').addEventListener('keydown', e => { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
+      const back = document.getElementById('backBtn');
+      if (window.innerWidth <= 800) back.style.display = 'grid';
+      back.addEventListener('click', () => document.getElementById('inbox').classList.remove('show-convo'));
+    }
+
+    renderThreads();
+    renderConvo();
+    if (KejaUI.qs('t')) document.getElementById('inbox').classList.add('show-convo');
+  </script>
+</body>
+</html>

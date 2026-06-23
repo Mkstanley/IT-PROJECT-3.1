@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Property — KejaHunt</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .crumb { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); padding: 20px 0 14px; }
+    .crumb a:hover { color: var(--green-dark); }
+    .gallery { display:grid; grid-template-columns: 2fr 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 10px; height: 420px; border-radius: var(--r-lg); overflow:hidden; }
+    .gallery .ph { border-radius: 0; }
+    .gallery .g-main { grid-row: 1 / span 2; }
+    .prop-grid { display:grid; grid-template-columns: 1fr 360px; gap: 36px; align-items: start; padding: 28px 0 64px; }
+    .prop-title { font-size: 30px; letter-spacing:-.03em; }
+    .prop-loc { display:flex; align-items:center; gap:6px; color:var(--muted); margin-top:8px; font-size:15px; }
+    .prop-loc svg { width:17px; height:17px; }
+    .quick { display:flex; gap:10px; flex-wrap:wrap; margin: 22px 0; }
+    .quick .q { background:#fff; border:1px solid var(--line); border-radius:var(--r); padding:12px 16px; box-shadow:var(--sh-1); min-width:96px; }
+    .quick .q .ql { font-size:12px; color:var(--muted); font-weight:600; display:flex; align-items:center; gap:6px; }
+    .quick .q .ql svg { width:14px; height:14px; }
+    .quick .q .qv { font-size:18px; font-weight:800; margin-top:2px; }
+    .block { padding: 26px 0; border-top:1px solid var(--line); }
+    .block h2 { font-size:20px; margin-bottom:14px; }
+    .amen-grid { display:grid; grid-template-columns: repeat(2,1fr); gap:12px; }
+    .amen-grid .a { display:flex; align-items:center; gap:10px; font-size:14.5px; font-weight:600; color:var(--ink-2); }
+    .amen-grid .a .ic { width:32px; height:32px; border-radius:9px; background:var(--green-tint); color:var(--green-dark); display:grid; place-items:center; flex:none; }
+    .amen-grid .a .ic svg { width:16px; height:16px; }
+
+    .booking { position: sticky; top: calc(var(--nav-h) + 20px); background:#fff; border:1px solid var(--line); border-radius:var(--r-lg); box-shadow:var(--sh-3); overflow:hidden; }
+    .booking .b-top { padding: 22px; border-bottom:1px solid var(--line-2); }
+    .booking .b-price { font-size:28px; font-weight:800; letter-spacing:-.02em; }
+    .booking .b-price span { font-size:14px; color:var(--muted); font-weight:600; }
+    .booking .b-body { padding: 20px 22px; }
+    .ll-card { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+    .ll-card .avatar { width:46px; height:46px; }
+    .deposit-row { display:flex; justify-content:space-between; font-size:14px; padding:7px 0; color:var(--ink-2); }
+    .deposit-row.total { border-top:1px solid var(--line-2); margin-top:6px; padding-top:12px; font-weight:800; font-size:16px; }
+
+    .review { padding:16px 0; border-bottom:1px solid var(--line-2); }
+    .review:last-child { border-bottom:none; }
+    .review .rv-head { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+    .review .rv-head .avatar { width:34px; height:34px; font-size:12px; }
+    .rating-summary { display:flex; align-items:center; gap:18px; background:var(--green-tint); border-radius:var(--r-lg); padding:18px 22px; margin-bottom:18px; }
+    .rating-summary .big { font-size:40px; font-weight:800; color:var(--green-dark); letter-spacing:-.03em; }
+
+    .map-mini { height:200px; border-radius:var(--r); overflow:hidden; border:1px solid var(--line); position:relative;
+      background: radial-gradient(circle at 40% 30%, #e9efe9, #dfe7df), var(--bg-2); }
+    .map-mini .map-grid { position:absolute; inset:0; background-image:
+      linear-gradient(rgba(14,124,102,.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(14,124,102,.06) 1px, transparent 1px); background-size: 36px 36px; }
+    .map-mini .pin2 { position:absolute; transform:translate(-50%,-50%); width:20px; height:20px; border-radius:50%; background:var(--green); border:3px solid #fff; box-shadow:var(--sh-2); }
+    .map-mini .ring { position:absolute; transform:translate(-50%,-50%); width:80px; height:80px; border-radius:50%; background:rgba(14,124,102,.12); }
+
+    @media (max-width: 900px) {
+      .prop-grid { grid-template-columns: 1fr; }
+      .gallery { grid-template-columns: 1fr 1fr; height: 320px; }
+      .gallery .g-main { grid-column: 1 / span 2; grid-row: auto; }
+      .gallery .g-3, .gallery .g-4 { display:none; }
+      .booking { position: static; }
+    }
+  </style>
+</head>
+<body>
+  <div id="nav"></div>
+  <div class="wrap" id="page"></div>
+  <div id="footer"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    KejaUI.mountNav('listings');
+
+    const id = KejaUI.qs('id');
+    const l = KH.listing(id);
+    const page = document.getElementById('page');
+
+    if (!l) {
+      page.innerHTML = `<div class="empty" style="padding:100px 20px"><div class="e-ic">${ICN.search}</div><h2>Listing not found</h2><p>It may have been removed.</p><a href="listings.html" class="btn btn-primary" style="margin-top:14px">Browse rentals</a></div>`;
+    } else {
+      const landlord = KH.user(l.landlordId);
+      const reviews = KH.reviews(l.id);
+      const n = KH.NEIGHBORHOODS.find(x => x.name === l.hood) || {x:50,y:50};
+      const bedTxt = l.bedrooms === 0 ? 'Self-contained' : l.bedrooms + ' bedroom';
+      const fav = KH.isFav(l.id);
+
+      page.innerHTML = `
+        <div class="crumb"><a href="index.html">Home</a> / <a href="listings.html">Rentals</a> / <a href="listings.html?hood=${encodeURIComponent(l.hood)}">${l.hood}</a> / <span style="color:var(--ink)">${l.title}</span></div>
+
+        <div class="gallery">
+          <div class="ph g-main"><span class="ph-label">photo · living area</span></div>
+          <div class="ph g-2"><span class="ph-label">bedroom</span></div>
+          <div class="ph g-3"><span class="ph-label">kitchen</span></div>
+          <div class="ph g-4"><span class="ph-label">bathroom</span></div>
+          <div class="ph g-5"><span class="ph-label">exterior</span></div>
+        </div>
+
+        <div class="prop-grid">
+          <div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px">
+              <div>
+                <div style="display:flex;gap:8px;margin-bottom:10px">${KejaUI.statusBadge(l.status)}<span class="badge badge-neutral">${l.type}</span>${l.furnished?'<span class="badge badge-info">Furnished</span>':''}</div>
+                <h1 class="prop-title">${l.title}</h1>
+                <div class="prop-loc">${ICN.pin} ${l.hood}, Nairobi</div>
+              </div>
+              <button class="btn btn-ghost" id="favBtn">${ICN.heart} ${fav?'Saved':'Save'}</button>
+            </div>
+
+            <div class="quick">
+              <div class="q"><div class="ql">${ICN.bed} Bedrooms</div><div class="qv">${l.bedrooms===0?'Studio':l.bedrooms}</div></div>
+              <div class="q"><div class="ql">${ICN.bath} Bathrooms</div><div class="qv">${l.bathrooms}</div></div>
+              <div class="q"><div class="ql">${ICN.calendar} Available</div><div class="qv" style="font-size:14px">${l.available}</div></div>
+              <div class="q"><div class="ql">${ICN.star} Rating</div><div class="qv">${l.rating||'—'}</div></div>
+            </div>
+
+            <div class="block" style="border-top:none;padding-top:0">
+              <h2>About this home</h2>
+              <p style="color:var(--ink-2);font-size:15.5px;line-height:1.7">${l.desc}</p>
+            </div>
+
+            <div class="block">
+              <h2>What this place offers</h2>
+              <div class="amen-grid" id="amenGrid"></div>
+            </div>
+
+            <div class="block">
+              <h2>Where you'll be</h2>
+              <p class="muted" style="margin-bottom:14px;font-size:14px">${l.hood}, Nairobi — exact location shared after you connect with the landlord.</p>
+              <div class="map-mini">
+                <div class="map-grid"></div>
+                <div class="ring" style="left:${n.x}%;top:${n.y}%"></div>
+                <div class="pin2" style="left:${n.x}%;top:${n.y}%"></div>
+              </div>
+            </div>
+
+            <div class="block">
+              <h2>Reviews ${reviews.length?`<span class="muted" style="font-weight:600;font-size:15px">· ${reviews.length}</span>`:''}</h2>
+              <div id="reviewArea"></div>
+            </div>
+          </div>
+
+          <!-- BOOKING / CONTACT -->
+          <aside class="booking">
+            <div class="b-top">
+              <div class="b-price">${KejaUI.fmtKES(l.rent)} <span>/ month</span></div>
+              <div class="muted" style="font-size:13px;margin-top:4px">${bedTxt} · ${l.type}</div>
+            </div>
+            <div class="b-body">
+              <div class="ll-card">
+                <span class="avatar">${KejaUI.initials(landlord.name)}</span>
+                <div>
+                  <div style="font-weight:700;font-size:14.5px">${landlord.name}</div>
+                  <div style="font-size:12.5px;color:var(--muted)">${landlord.role==='agent'?'Verified agent':'Property owner'} ${landlord.verified?'· ✓ verified':''}</div>
+                </div>
+              </div>
+
+              <button class="btn btn-primary btn-block" id="msgBtn" style="margin-bottom:10px">${ICN.msg} Message landlord</button>
+              <button class="btn btn-ghost btn-block" id="viewBtn">${ICN.calendar} Request a viewing</button>
+
+              <div style="margin-top:20px;padding-top:18px;border-top:1px solid var(--line-2)">
+                <div class="deposit-row"><span>First month rent</span><b>${KejaUI.fmtKES(l.rent)}</b></div>
+                <div class="deposit-row"><span>Deposit</span><b>${KejaUI.fmtKES(l.deposit)}</b></div>
+                <div class="deposit-row total"><span>Move-in total</span><span>${KejaUI.fmtKES(l.rent + l.deposit)}</span></div>
+                <p class="muted" style="font-size:12px;margin-top:10px">No broker fees. KejaHunt never charges renters to view or contact a landlord.</p>
+              </div>
+            </div>
+          </aside>
+        </div>
+
+        <div class="block">
+          <h2 style="margin-bottom:18px">Similar verified homes</h2>
+          <div class="listing-grid" id="similar"></div>
+        </div>
+      `;
+
+      // amenities
+      const ag = document.getElementById('amenGrid');
+      (l.amenities.length?l.amenities:['Water 24/7','Secure compound']).forEach(a => {
+        ag.appendChild(KejaUI.el(`<div class="a"><span class="ic">${KejaUI.amenityIcon(a)}</span>${a}</div>`));
+      });
+
+      // reviews
+      const ra = document.getElementById('reviewArea');
+      if (reviews.length) {
+        ra.appendChild(KejaUI.el(`<div class="rating-summary"><div class="big">${l.rating}</div><div><div class="stars">${ICN.star} Average rating</div><div class="muted" style="font-size:13px">Based on ${reviews.length} tenant ${reviews.length===1?'review':'reviews'}</div></div></div>`));
+        reviews.forEach(r => {
+          ra.appendChild(KejaUI.el(`<div class="review">
+            <div class="rv-head"><span class="avatar">${KejaUI.initials(r.by)}</span>
+              <div><div style="font-weight:700;font-size:14px">${r.by}</div><div class="muted" style="font-size:12px">${r.date}</div></div>
+              <span class="stars" style="margin-left:auto">${ICN.star} ${r.rating}.0</span></div>
+            <p style="font-size:14.5px;color:var(--ink-2)">${r.text}</p></div>`));
+        });
+      } else {
+        ra.innerHTML = `<p class="muted" style="font-size:14.5px">No reviews yet. Be the first to review after your stay.</p>`;
+      }
+
+      // favorite
+      document.getElementById('favBtn').addEventListener('click', e => {
+        const on = KH.toggleFav(l.id);
+        e.currentTarget.innerHTML = ICN.heart + (on?' Saved':' Save');
+        KejaUI.toast(on?'Saved to favorites':'Removed', ICN.heart);
+      });
+
+      // message landlord
+      function openMessage() {
+        const me = KH.currentUser();
+        if (!me) { KejaUI.toast('Please log in to message'); setTimeout(()=>location.href='login.html?next=property.html?id='+l.id,700); return; }
+        KejaUI.modal(`
+          <div class="modal">
+            <div class="modal-head"><h3>Message ${landlord.name}</h3><button class="modal-x" onclick="KejaUI.closeModal()">${ICN.x}</button></div>
+            <div class="modal-body">
+              <p class="muted" style="font-size:13.5px;margin-bottom:14px">About: <b style="color:var(--ink)">${l.title}</b></p>
+              <textarea class="textarea" id="msgText" placeholder="Hi, is this still available? I'd like to arrange a viewing.">Hi, is the ${l.type.toLowerCase()} in ${l.hood} still available? I'd like to arrange a viewing.</textarea>
+              <button class="btn btn-primary btn-block" id="sendMsg" style="margin-top:12px">Send message</button>
+            </div>
+          </div>`);
+        document.getElementById('sendMsg').addEventListener('click', () => {
+          const t = KH.findOrCreateThread(l.id, me.id, l.landlordId);
+          KH.sendMessage(t.id, me.id, document.getElementById('msgText').value.trim() || 'Hi, is this still available?');
+          KejaUI.closeModal();
+          KejaUI.toast('Message sent', ICN.msg);
+          setTimeout(()=>location.href='messages.html?t='+t.id, 700);
+        });
+      }
+      document.getElementById('msgBtn').addEventListener('click', openMessage);
+      document.getElementById('viewBtn').addEventListener('click', openMessage);
+
+      // similar
+      const sim = KH.verifiedListings().filter(x => x.id !== l.id && (x.hood === l.hood || x.type === l.type)).slice(0,3);
+      const simWrap = document.getElementById('similar');
+      (sim.length?sim:KH.verifiedListings().filter(x=>x.id!==l.id).slice(0,3)).forEach(x => simWrap.appendChild(KejaUI.listingCard(x)));
+    }
+
+    KejaUI.mountFooter();
+  </script>
+</body>
+</html>

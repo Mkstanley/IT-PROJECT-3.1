@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create account — KejaHunt</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .auth { display:grid; grid-template-columns: 1fr 1fr; min-height: calc(100vh - var(--nav-h)); }
+    .auth-aside { background: var(--green-deep); color:#fff; padding: 56px; display:flex; flex-direction:column; justify-content:space-between; position:relative; overflow:hidden; }
+    .auth-aside .a-mark { position:absolute; right:-60px; top:-60px; width:260px; height:260px; border-radius:50%; background: rgba(255,255,255,.05); }
+    .auth-aside h2 { font-size:34px; letter-spacing:-.03em; max-width:380px; line-height:1.12; }
+    .auth-aside .a-list { margin-top:28px; display:flex; flex-direction:column; gap:16px; }
+    .auth-aside .a-list div { display:flex; gap:12px; align-items:flex-start; font-size:15px; color:#cfe2db; }
+    .auth-aside .a-list svg { width:20px; height:20px; color:#7fe3c4; flex:none; margin-top:2px; }
+    .auth-form { padding: 48px 56px; display:flex; align-items:center; justify-content:center; }
+    .auth-form .inner { width:100%; max-width: 420px; }
+    .auth-form h1 { font-size:28px; letter-spacing:-.02em; }
+    .role-pick { display:grid; grid-template-columns: repeat(3,1fr); gap:10px; margin-bottom:18px; }
+    .role-pick label { border:1.5px solid var(--line); border-radius:var(--r); padding:14px 10px; text-align:center; cursor:pointer; transition:.15s; }
+    .role-pick label:hover { border-color:var(--green-tint-2); }
+    .role-pick input { display:none; }
+    .role-pick input:checked + .rp { color:var(--green-dark); }
+    .role-pick label:has(input:checked) { border-color:var(--green); background:var(--green-tint); }
+    .role-pick .rp-ic { width:34px;height:34px;border-radius:10px;background:var(--green-tint);color:var(--green-dark);display:grid;place-items:center;margin:0 auto 8px; }
+    .role-pick .rp-ic svg { width:18px;height:18px; }
+    .role-pick .rp { font-weight:700; font-size:13.5px; }
+    .role-pick .rp-sub { font-size:11px; color:var(--muted); margin-top:2px; }
+    .auth-foot { text-align:center; margin-top:22px; font-size:14px; color:var(--muted); }
+    .auth-foot a { color:var(--green-dark); font-weight:700; }
+    .brand-line { display:flex; align-items:center; gap:10px; font-weight:800; font-size:22px; }
+    .brand-line .mark { width:32px;height:32px;border-radius:9px;background:var(--green); }
+    @media (max-width: 800px) { .auth { grid-template-columns: 1fr; } .auth-aside { display:none; } .auth-form { padding: 36px 24px; } }
+  </style>
+</head>
+<body>
+  <div id="nav"></div>
+  <div class="auth">
+    <aside class="auth-aside">
+      <div class="a-mark"></div>
+      <a href="index.html" class="brand-line" style="color:#fff;position:relative"><span class="mark"></span>KejaHunt</a>
+      <div style="position:relative">
+        <h2>Join Kenya's most trusted rental platform.</h2>
+        <div class="a-list" id="aList"></div>
+      </div>
+      <div class="mono" style="font-size:12px;color:#9fbcb2;position:relative">Your data is handled per the Kenya Data Protection Act (2019)</div>
+    </aside>
+
+    <main class="auth-form">
+      <div class="inner">
+        <h1>Create your account</h1>
+        <p class="muted" style="margin:8px 0 22px">It's free. Tell us how you'll use KejaHunt.</p>
+
+        <form id="regForm">
+          <div class="role-pick" id="rolePick">
+            <label><input type="radio" name="role" value="tenant" checked><div class="rp-ic" data-ic="user"></div><div class="rp">Renter</div><div class="rp-sub">Find a home</div></label>
+            <label><input type="radio" name="role" value="landlord"><div class="rp-ic" data-ic="home"></div><div class="rp">Landlord</div><div class="rp-sub">List property</div></label>
+            <label><input type="radio" name="role" value="agent"><div class="rp-ic" data-ic="users"></div><div class="rp">Agent</div><div class="rp-sub">Manage many</div></label>
+          </div>
+
+          <div class="field"><label>Full name</label><input class="input" name="name" placeholder="e.g. Mary Kamau" required></div>
+          <div class="grid-2">
+            <div class="field"><label>Email</label><input class="input" type="email" name="email" placeholder="you@example.com" required></div>
+            <div class="field"><label>Phone</label><input class="input" name="phone" placeholder="07XX XXX XXX" required></div>
+          </div>
+          <div class="field"><label>Password</label><input class="input" type="password" name="password" placeholder="Create a password" required></div>
+          <label class="checkrow" style="margin-bottom:16px"><input type="checkbox" required checked> I agree to the Terms & the Data Protection policy</label>
+          <button class="btn btn-primary btn-lg btn-block" type="submit">Create account</button>
+        </form>
+
+        <div class="auth-foot">Already have an account? <a href="login.html">Log in</a></div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    KejaUI.mountNav('');
+    document.querySelectorAll('.rp-ic').forEach(d => d.innerHTML = ICN[d.dataset.ic]);
+    document.getElementById('aList').innerHTML = [
+      'Verified listings — no fake photos or ghost homes',
+      'Reach thousands of renters, no broker cut',
+      'Built-in messaging keeps everyone safe',
+    ].map(t => `<div>${ICN.check}<span>${t}</span></div>`).join('');
+
+    document.getElementById('regForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const f = new FormData(e.target);
+      const u = KH.register({ role:f.get('role'), name:f.get('name'), email:f.get('email'), phone:f.get('phone') });
+      KejaUI.toast('Account created — welcome, ' + u.name.split(' ')[0] + '!');
+      const dest = u.role === 'tenant' ? 'account.html' : 'landlord.html';
+      setTimeout(() => location.href = dest, 700);
+    });
+  </script>
+</body>
+</html>

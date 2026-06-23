@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Landlord dashboard — KejaHunt</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .listing-row { display:flex; align-items:center; gap:14px; padding:14px; border:1px solid var(--line); border-radius:var(--r); margin-bottom:12px; background:#fff; box-shadow:var(--sh-1); }
+    .listing-row .lr-thumb { width:74px;height:58px;border-radius:8px;flex:none; }
+    .listing-row .lr-main { flex:1; min-width:0; }
+    .listing-row .lr-title { font-weight:700; font-size:15px; }
+    .listing-row .lr-sub { font-size:13px; color:var(--muted); margin-top:2px; }
+    .listing-row .lr-actions { display:flex; gap:8px; }
+    .icon-btn { width:36px;height:36px;border-radius:9px;border:1px solid var(--line);background:#fff;display:grid;place-items:center;color:var(--muted); }
+    .icon-btn:hover { color:var(--ink); border-color:var(--muted-2); }
+    .icon-btn.danger:hover { color:var(--red); border-color:var(--red); }
+    .reject-note { background:var(--red-tint); border-radius:var(--r-sm); padding:8px 12px; font-size:12.5px; color:var(--red); margin-top:8px; }
+    .amen-pick { display:grid; grid-template-columns: repeat(2,1fr); gap:6px; }
+    .amen-pick label { font-size:13px; }
+    .form-section { margin-bottom:8px; padding-bottom:6px; }
+    .form-section h4 { font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-family:'Space Mono',monospace; margin-bottom:14px; }
+    .upload-zone { border:2px dashed var(--line); border-radius:var(--r); padding:26px; text-align:center; color:var(--muted); background:var(--bg); }
+    .upload-zone svg { width:30px;height:30px;color:var(--muted-2); margin-bottom:8px; }
+  </style>
+</head>
+<body>
+  <div id="nav"></div>
+  <div id="root"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    KejaUI.mountNav('landlord');
+    let u = KH.currentUser();
+    if (!u || (u.role !== 'landlord' && u.role !== 'agent')) { KH.loginAs('u_l1'); u = KH.currentUser(); }
+
+    function myListings() { return KH.listings().filter(l => l.landlordId === u.id); }
+
+    function render() {
+      const mine = myListings();
+      const verified = mine.filter(l=>l.status==='verified').length;
+      const pending = mine.filter(l=>l.status==='pending').length;
+      const avgRent = mine.length ? Math.round(mine.reduce((s,l)=>s+l.rent,0)/mine.length) : 0;
+
+      document.getElementById('root').innerHTML = `
+        <div class="dash">
+          <aside class="dash-side">
+            <div class="ds-group">
+              <div class="ds-label">${u.role==='agent'?'Agent':'Landlord'}</div>
+              <div class="ds-link active">${ICN.grid} Dashboard</div>
+              <a class="ds-link" href="messages.html">${ICN.msg} Messages</a>
+              <a class="ds-link" href="account.html">${ICN.user} Profile</a>
+            </div>
+            <div class="ds-group">
+              <div class="ds-label">Quick links</div>
+              <a class="ds-link" href="listings.html">${ICN.search} Browse market</a>
+              <a class="ds-link" href="index.html">${ICN.home} Home</a>
+            </div>
+            <button class="btn btn-primary btn-block" id="newBtn" style="margin-top:8px">${ICN.plus} Post a listing</button>
+          </aside>
+
+          <main class="dash-main">
+            <div class="dash-head">
+              <div><h1>Welcome, ${u.name.split(' ')[0]}</h1><p>Manage your rentals and respond to enquiries.</p></div>
+              <button class="btn btn-primary" id="newBtn2">${ICN.plus} Post a listing</button>
+            </div>
+
+            <div class="stat-grid" style="margin-bottom:28px">
+              <div class="stat"><div class="s-top"><div class="s-ic" style="background:var(--green-tint);color:var(--green-dark)">${ICN.home}</div></div><div class="s-val">${mine.length}</div><div class="s-label">Total listings</div></div>
+              <div class="stat"><div class="s-top"><div class="s-ic" style="background:var(--green-tint);color:var(--green-dark)">${ICN.shield}</div></div><div class="s-val">${verified}</div><div class="s-label">Live & verified</div></div>
+              <div class="stat"><div class="s-top"><div class="s-ic" style="background:var(--amber-tint);color:var(--amber)">${ICN.bell}</div></div><div class="s-val">${pending}</div><div class="s-label">Awaiting review</div></div>
+              <div class="stat"><div class="s-top"><div class="s-ic" style="background:var(--blue-tint);color:var(--blue)">${ICN.chart}</div></div><div class="s-val" style="font-size:22px">${avgRent?KejaUI.fmtKES(avgRent):'—'}</div><div class="s-label">Average rent</div></div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head"><h3>Your listings</h3><span class="muted" style="font-size:13px">${mine.length} total</span></div>
+              <div style="padding:16px" id="listRows"></div>
+            </div>
+          </main>
+        </div>
+      `;
+
+      const rows = document.getElementById('listRows');
+      if (!mine.length) {
+        rows.innerHTML = `<div class="empty"><div class="e-ic">${ICN.home}</div><h3 style="color:var(--ink)">No listings yet</h3><p>Post your first property to start receiving enquiries.</p></div>`;
+      }
+      mine.forEach(l => {
+        const row = KejaUI.el(`<div class="listing-row">
+          <div class="lr-thumb ph"></div>
+          <div class="lr-main">
+            <div class="lr-title">${l.title}</div>
+            <div class="lr-sub">${l.hood} · ${KejaUI.fmtKES(l.rent)}/mo · ${l.type}</div>
+            ${l.status==='rejected'&&l.rejectReason?`<div class="reject-note">⚠ ${l.rejectReason}</div>`:''}
+          </div>
+          ${KejaUI.statusBadge(l.status)}
+          <div class="lr-actions">
+            <a class="icon-btn" href="property.html?id=${l.id}" title="View">${ICN.eye}</a>
+            <button class="icon-btn" data-edit="${l.id}" title="Edit">${ICN.edit}</button>
+            <button class="icon-btn danger" data-del="${l.id}" title="Delete">${ICN.trash}</button>
+          </div>
+        </div>`);
+        rows.appendChild(row);
+      });
+
+      document.getElementById('newBtn').addEventListener('click', () => openForm());
+      document.getElementById('newBtn2').addEventListener('click', () => openForm());
+      rows.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => {
+        KejaUI.modal(`<div class="modal"><div class="modal-head"><h3>Delete listing?</h3><button class="modal-x" onclick="KejaUI.closeModal()">${ICN.x}</button></div><div class="modal-body"><p class="muted" style="margin-bottom:18px">This cannot be undone.</p><div style="display:flex;gap:10px"><button class="btn btn-ghost btn-block" onclick="KejaUI.closeModal()">Cancel</button><button class="btn btn-danger btn-block" id="confirmDel">Delete</button></div></div></div>`);
+        document.getElementById('confirmDel').addEventListener('click', () => { KH.deleteListing(b.dataset.del); KejaUI.closeModal(); KejaUI.toast('Listing deleted', ICN.trash); render(); });
+      }));
+      rows.querySelectorAll('[data-edit]').forEach(b => b.addEventListener('click', () => openForm(b.dataset.edit)));
+    }
+
+    function openForm(editId) {
+      const l = editId ? KH.listing(editId) : null;
+      const amenChecks = KH.ALL_AMENITIES.map(a =>
+        `<label class="checkrow"><input type="checkbox" value="${a}" ${l&&l.amenities.includes(a)?'checked':''}><span>${a}</span></label>`).join('');
+      const typeOpts = KH.TYPES.map(t=>`<option ${l&&l.type===t?'selected':''}>${t}</option>`).join('');
+      const hoodOpts = KH.NEIGHBORHOODS.map(n=>`<option ${l&&l.hood===n.name?'selected':''}>${n.name}</option>`).join('');
+
+      KejaUI.modal(`
+        <div class="modal" style="max-width:560px;max-height:90vh;overflow-y:auto">
+          <div class="modal-head"><h3>${l?'Edit listing':'Post a new listing'}</h3><button class="modal-x" onclick="KejaUI.closeModal()">${ICN.x}</button></div>
+          <div class="modal-body">
+            <form id="listForm">
+              <div class="form-section">
+                <h4>Basics</h4>
+                <div class="field"><label>Listing title</label><input class="input" name="title" placeholder="e.g. Cozy bedsitter near the stage" value="${l?l.title:''}" required></div>
+                <div class="grid-2">
+                  <div class="field"><label>Property type</label><select class="select" name="type">${typeOpts}</select></div>
+                  <div class="field"><label>Neighborhood</label><select class="select" name="hood">${hoodOpts}</select></div>
+                </div>
+                <div class="grid-3">
+                  <div class="field"><label>Bedrooms</label><input class="input" type="number" name="bedrooms" min="0" value="${l?l.bedrooms:1}"></div>
+                  <div class="field"><label>Bathrooms</label><input class="input" type="number" name="bathrooms" min="1" value="${l?l.bathrooms:1}"></div>
+                  <div class="field"><label>Available</label><input class="input" name="available" value="${l?l.available:'Immediately'}"></div>
+                </div>
+              </div>
+              <div class="form-section">
+                <h4>Pricing (KES)</h4>
+                <div class="grid-2">
+                  <div class="field"><label>Monthly rent</label><input class="input" type="number" name="rent" value="${l?l.rent:''}" placeholder="e.g. 15000" required></div>
+                  <div class="field"><label>Deposit</label><input class="input" type="number" name="deposit" value="${l?l.deposit:''}" placeholder="e.g. 15000"></div>
+                </div>
+              </div>
+              <div class="form-section">
+                <h4>Description</h4>
+                <div class="field"><textarea class="textarea" name="desc" placeholder="Describe the home, security, water, transport links...">${l?l.desc:''}</textarea></div>
+              </div>
+              <div class="form-section">
+                <h4>Amenities</h4>
+                <div class="amen-pick">${amenChecks}</div>
+              </div>
+              <div class="form-section">
+                <h4>Photos</h4>
+                <div class="upload-zone">${ICN.plus}<div style="font-weight:600">Drag photos here or click to upload</div><div style="font-size:12px;margin-top:4px">JPG/PNG · placeholder in this demo</div></div>
+              </div>
+              <div class="form-section">
+                <h4>Ownership proof</h4>
+                <div class="upload-zone">${ICN.shield}<div style="font-weight:600">Upload title deed or tenancy agreement</div><div style="font-size:12px;margin-top:4px">Required for the verified badge · reviewed by admin</div></div>
+              </div>
+              <button class="btn btn-primary btn-lg btn-block" type="submit" style="margin-top:8px">${l?'Save changes':'Submit for verification'}</button>
+              <p class="muted center" style="font-size:12px;margin-top:10px">New listings are reviewed by our team before going live.</p>
+            </form>
+          </div>
+        </div>`);
+
+      document.getElementById('listForm').addEventListener('submit', e => {
+        e.preventDefault();
+        const f = new FormData(e.target);
+        const amenities = [...document.querySelectorAll('#listForm input[type=checkbox]:checked')].map(c=>c.value);
+        const data = {
+          title:f.get('title'), type:f.get('type'), hood:f.get('hood'),
+          bedrooms:+f.get('bedrooms'), bathrooms:+f.get('bathrooms'), available:f.get('available'),
+          rent:+f.get('rent'), deposit:+f.get('deposit')||+f.get('rent'), desc:f.get('desc'),
+          amenities, landlordId:u.id,
+        };
+        if (l) { KH.updateListing(l.id, Object.assign(data, {status: l.status==='rejected'?'pending':l.status})); KejaUI.toast('Listing updated'); }
+        else { KH.addListing(data); KejaUI.toast('Listing submitted for review', ICN.shield); }
+        KejaUI.closeModal();
+        render();
+      });
+    }
+
+    render();
+    KejaUI.mountFooter();
+  </script>
+</body>
+</html>
