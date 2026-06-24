@@ -82,12 +82,14 @@
 
   /* ---- photo helpers ----------------------------------------------------- */
   const HOOD_IMAGE = {
+    'Kilimani': 'IT-PROJECT%20IMAGES/kileleshwa%201.jpg',
     'Westlands': 'IT-PROJECT%20IMAGES/WESTLANDS.jpg',
     'Kileleshwa': 'IT-PROJECT%20IMAGES/KILELESHWA.jpg',
     'Lavington': 'IT-PROJECT%20IMAGES/LAVINGTON.jpg',
     'Parklands': 'IT-PROJECT%20IMAGES/PARKLANDS.jpg',
     'South B': 'IT-PROJECT%20IMAGES/SOUTH%20B.jpg',
     'South C': 'IT-PROJECT%20IMAGES/SOUTH%20C.jpg',
+    'Nairobi West': 'IT-PROJECT%20IMAGES/nairobi%20west%201.jpg',
   };
   const TYPE_IMAGE = {
     'Bedsitter': 'IT-PROJECT%20IMAGES/BEDSITTER.jpg',
