@@ -6,7 +6,7 @@
     "test:smoke": "node run-smoke.js",
     "test:flows": "node flows.test.js",
     "test": "node run-smoke.js && node flows.test.js",
-    "serve": "python3 -m http.server 8000"
+    "serve": "py -m http.server 8000"
   },
   "keywords": ["rentals", "kenya", "nairobi", "real-estate", "bbit", "strathmore"],
   "license": "MIT",

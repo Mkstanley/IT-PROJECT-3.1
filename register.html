@@ -51,7 +51,7 @@
         <h1>Create your account</h1>
         <p class="muted" style="margin:8px 0 22px">It's free. Tell us how you'll use KejaHunt.</p>
 
-        <form id="regForm">
+        <form id="regForm" action="php/register.php" method="POST">
           <div class="role-pick" id="rolePick">
             <label><input type="radio" name="role" value="tenant" checked><div class="rp-ic" data-ic="user"></div><div class="rp">Renter</div><div class="rp-sub">Find a home</div></label>
             <label><input type="radio" name="role" value="landlord"><div class="rp-ic" data-ic="home"></div><div class="rp">Landlord</div><div class="rp-sub">List property</div></label>
@@ -84,14 +84,8 @@
       'Built-in messaging keeps everyone safe',
     ].map(t => `<div>${ICN.check}<span>${t}</span></div>`).join('');
 
-    document.getElementById('regForm').addEventListener('submit', e => {
-      e.preventDefault();
-      const f = new FormData(e.target);
-      const u = KH.register({ role:f.get('role'), name:f.get('name'), email:f.get('email'), phone:f.get('phone') });
-      KejaUI.toast('Account created — welcome, ' + u.name.split(' ')[0] + '!');
-      const dest = u.role === 'tenant' ? 'account.html' : 'landlord.html';
-      setTimeout(() => location.href = dest, 700);
-    });
+    
+
   </script>
 </body>
 </html>
