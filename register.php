@@ -1,21 +1,10 @@
-<?php
-include 'db.php';
+ <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-$role = $_POST['role'];
-$name = $_POST['name'];
-$email = $_POST['email'];
-$phone = $_POST['phone'];
-$password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+echo "<pre>";
+print_r($_POST);
+echo "</pre>";
 
-$sql = "INSERT INTO users(role, fullname, email, phone, password)
-VALUES('$role','$name','$email','$phone','$password')";
-
-if(mysqli_query($conn,$sql)){
-    header("Location: ../login.html");
-}
-else{
-    echo "Registration failed: " . mysqli_error($conn);
-}
-    
 
 ?>
